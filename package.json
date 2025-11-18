@@ -1,0 +1,36 @@
+{
+  "name": "aeronomy-saf-marketplace",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "powershell -ExecutionPolicy Bypass -Command \".\\find-port.ps1; if ($env:PORT) { next dev -p $env:PORT } else { Write-Host 'Failed to determine port.'; exit 1 }\"",
+    "dev:direct": "next dev -p 3004",
+    "build": "next build",
+    "start": "next start -p 3004",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@clerk/nextjs": "^5.0.0",
+    "date-fns": "^4.1.0",
+    "db": "^6.0.3",
+    "formidable": "^3.5.4",
+    "lucide-react": "^0.400.0",
+    "mongo": "^0.1.0",
+    "next": "^14.2.0",
+    "pdf-parse": "^2.4.5",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0",
+    "tesseract.js": "^6.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^8.57.0",
+    "eslint-config-next": "^14.2.0",
+    "postcss": "^8.4.40",
+    "tailwindcss": "^3.4.7",
+    "typescript": "^5.4.0"
+  }
+}
