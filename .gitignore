@@ -16,6 +16,7 @@
 # misc
 .DS_Store
 *.pem
+Thumbs.db
 
 # debug
 npm-debug.log*
@@ -33,25 +34,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-
 # clerk configuration (can include secrets)
 /.clerk/
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+# IDEs
+.idea/
+.vscode/
