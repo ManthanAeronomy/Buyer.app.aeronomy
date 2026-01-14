@@ -9,7 +9,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import connectDB from '@/lib/mongodb'
 import { listLots, getUserLots } from '@/lib/lots/service'
 import { auth } from '@clerk/nextjs/server'
-import type { LotStatus } from '@/models/Lot'
+import type { LotStatus, LotType } from '@/models/Lot'
 
 export const dynamic = 'force-dynamic'
 
@@ -66,7 +66,7 @@ export async function GET(request: NextRequest) {
     const filters = {
       orgId,
       status: searchParams.get('status') as LotStatus | undefined,
-      type: searchParams.get('type') || undefined,
+      type: searchParams.get('type') as LotType | undefined,
       minPrice: searchParams.get('minPrice') ? parseFloat(searchParams.get('minPrice')!) : undefined,
       maxPrice: searchParams.get('maxPrice') ? parseFloat(searchParams.get('maxPrice')!) : undefined,
       standards: searchParams.get('standards')?.split(',') || undefined,
