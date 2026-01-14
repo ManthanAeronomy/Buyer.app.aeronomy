@@ -113,7 +113,7 @@ export default function Step5Operational({ data, onNext, onBack, saving }: StepP
                             <span key={i} className="flex items-center rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-900  ">
                                 {hub}
                                 <button type="button" onClick={() => {
-                                    const updated = formData.operational.hubAirports.filter((_, idx) => idx !== i)
+                                    const updated = formData.operational.hubAirports.filter((_: any, idx: number) => idx !== i)
                                     setFormData({ ...formData, operational: { ...formData.operational, hubAirports: updated } })
                                 }} className="ml-2 hover:text-red-500"><X className="h-3 w-3" /></button>
                             </span>
@@ -130,8 +130,8 @@ export default function Step5Operational({ data, onNext, onBack, saving }: StepP
                                 type="button"
                                 onClick={() => toggleRegion(region)}
                                 className={`rounded-full px-4 py-1 text-sm font-medium transition-colors ${formData.operational.regions.includes(region)
-                                        ? 'bg-blue-100 text-blue-700  '
-                                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200  '
+                                    ? 'bg-blue-100 text-blue-700  '
+                                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200  '
                                     }`}
                             >
                                 {region}
@@ -173,7 +173,7 @@ export default function Step5Operational({ data, onNext, onBack, saving }: StepP
                             <div key={i} className="flex items-center justify-between rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm  ">
                                 <span><span className="font-semibold">{item.airport}:</span> {item.supplier}</span>
                                 <button type="button" onClick={() => {
-                                    const updated = formData.operational.fuelSuppliers.filter((_, idx) => idx !== i)
+                                    const updated = formData.operational.fuelSuppliers.filter((_: any, idx: number) => idx !== i)
                                     setFormData({ ...formData, operational: { ...formData.operational, fuelSuppliers: updated } })
                                 }} className="text-slate-400 hover:text-red-500"><X className="h-4 w-4" /></button>
                             </div>
@@ -201,7 +201,7 @@ export default function Step5Operational({ data, onNext, onBack, saving }: StepP
                             <span key={i} className="flex items-center rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-900  ">
                                 {p}
                                 <button type="button" onClick={() => {
-                                    const updated = formData.operational.logisticPartners.filter((_, idx) => idx !== i)
+                                    const updated = formData.operational.logisticPartners.filter((_: any, idx: number) => idx !== i)
                                     setFormData({ ...formData, operational: { ...formData.operational, logisticPartners: updated } })
                                 }} className="ml-2 hover:text-red-500"><X className="h-3 w-3" /></button>
                             </span>
@@ -236,7 +236,7 @@ export default function Step5Operational({ data, onNext, onBack, saving }: StepP
                             <span key={i} className="flex items-center rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-900  ">
                                 {f}
                                 <button type="button" onClick={() => {
-                                    const updated = formData.operational.fleet.types.filter((_, idx) => idx !== i)
+                                    const updated = formData.operational.fleet.types.filter((_: any, idx: number) => idx !== i)
                                     setFormData({ ...formData, operational: { ...formData.operational, fleet: { ...formData.operational.fleet, types: updated } } })
                                 }} className="ml-2 hover:text-red-500"><X className="h-3 w-3" /></button>
                             </span>

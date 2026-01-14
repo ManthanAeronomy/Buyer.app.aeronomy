@@ -26,7 +26,7 @@ export default function Step2CorporateStructure({ data, onNext, onBack, saving }
     }
 
     const removeSubsidiary = (index: number) => {
-        setFormData({ ...formData, subsidiaries: formData.subsidiaries.filter((_, i) => i !== index) })
+        setFormData({ ...formData, subsidiaries: formData.subsidiaries.filter((_: any, i: number) => i !== index) })
     }
 
     const addAlliance = () => {
@@ -37,7 +37,7 @@ export default function Step2CorporateStructure({ data, onNext, onBack, saving }
     }
 
     const removeAlliance = (index: number) => {
-        setFormData({ ...formData, alliances: formData.alliances.filter((_, i) => i !== index) })
+        setFormData({ ...formData, alliances: formData.alliances.filter((_: any, i: number) => i !== index) })
     }
 
     const handleSubmit = (e: React.FormEvent) => {

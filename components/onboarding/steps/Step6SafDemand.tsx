@@ -148,7 +148,7 @@ export default function Step6SafDemand({ data, onNext, onBack, saving }: StepPro
                             <div key={i} className="flex items-center justify-between rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm  ">
                                 <span><span className="font-semibold">{req.year}:</span> {req.amount} {req.unit}</span>
                                 <button type="button" onClick={() => {
-                                    const updated = formData.safDemand.volume.requirements.filter((_, idx) => idx !== i)
+                                    const updated = formData.safDemand.volume.requirements.filter((_: any, idx: number) => idx !== i)
                                     setFormData({ ...formData, safDemand: { ...formData.safDemand, volume: { ...formData.safDemand.volume, requirements: updated } } })
                                 }} className="text-slate-400 hover:text-red-500"><X className="h-4 w-4" /></button>
                             </div>
@@ -201,8 +201,8 @@ export default function Step6SafDemand({ data, onNext, onBack, saving }: StepPro
                                 type="button"
                                 onClick={() => togglePathway(path)}
                                 className={`rounded-full px-4 py-1 text-sm font-medium transition-colors ${formData.safDemand.quality.pathways.includes(path)
-                                        ? 'bg-blue-100 text-blue-700  '
-                                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200  '
+                                    ? 'bg-blue-100 text-blue-700  '
+                                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200  '
                                     }`}
                             >
                                 {path}
