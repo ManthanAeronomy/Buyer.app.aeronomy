@@ -5,7 +5,7 @@ import { Contract } from './ContractList'
 
 interface ContractCardProps {
   contract: Contract
-  onStatusUpdate: (contractId: string, status: string) => void
+  onStatusUpdate?: (contractId: string, status: string) => void
 }
 
 export default function ContractCard({ contract, onStatusUpdate }: ContractCardProps) {
@@ -193,7 +193,7 @@ export default function ContractCard({ contract, onStatusUpdate }: ContractCardP
             <button
               onClick={() => {
                 if (confirm('Mark this contract as signed?')) {
-                  onStatusUpdate(contract._id, 'signed')
+                  onStatusUpdate?.(contract._id, 'signed')
                 }
               }}
               className="flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
