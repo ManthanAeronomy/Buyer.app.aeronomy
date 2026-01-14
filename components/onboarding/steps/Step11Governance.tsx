@@ -81,7 +81,7 @@ export default function Step11Governance({ data, onNext, onBack, saving }: StepP
                             <div key={i} className="flex items-center justify-between rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm  ">
                                 <span>Above <span className="font-semibold">{item.amount} {item.currency}</span> requires <span className="font-semibold">{item.approverRole}</span></span>
                                 <button type="button" onClick={() => {
-                                    const updated = formData.governance.approvalThresholds.filter((_, idx) => idx !== i)
+                                    const updated = formData.governance.approvalThresholds.filter((_: any, idx: number) => idx !== i)
                                     setFormData({ ...formData, governance: { ...formData.governance, approvalThresholds: updated } })
                                 }} className="text-slate-400 hover:text-red-500"><X className="h-4 w-4" /></button>
                             </div>
