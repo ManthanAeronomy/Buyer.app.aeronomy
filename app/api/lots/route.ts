@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import connectDB from '@/lib/mongodb'
 import { listLots, createLot, getUserLots } from '@/lib/lots/service'
+import type { LotStatus, LotType } from '@/models/Lot'
 
 export const dynamic = 'force-dynamic'
 
@@ -9,7 +10,7 @@ export const dynamic = 'force-dynamic'
 export async function GET(request: NextRequest) {
   try {
     await connectDB()
-    
+
     // Try to get userId, but don't require it (public endpoint)
     let userId: string | null = null
     try {
@@ -21,7 +22,7 @@ export async function GET(request: NextRequest) {
     }
 
     const searchParams = request.nextUrl.searchParams
-    
+
     // If user is authenticated and wants their own lots
     if (userId && searchParams.get('mine') === 'true') {
       const includeDrafts = searchParams.get('includeDrafts') === 'true'
@@ -31,8 +32,8 @@ export async function GET(request: NextRequest) {
 
     // Otherwise, return public lots with filters (no auth required)
     const filters = {
-      status: searchParams.get('status') || undefined,
-      type: searchParams.get('type') || undefined,
+      status: searchParams.get('status') as LotStatus | undefined,
+      type: searchParams.get('type') as LotType | undefined,
       orgId: searchParams.get('orgId') || undefined,
       minPrice: searchParams.get('minPrice') ? parseFloat(searchParams.get('minPrice')!) : undefined,
       maxPrice: searchParams.get('maxPrice') ? parseFloat(searchParams.get('maxPrice')!) : undefined,
