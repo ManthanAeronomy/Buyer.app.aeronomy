@@ -63,9 +63,9 @@ export async function createContractFromBid(
     pricing: bid.pricing,
     delivery: bid.deliveryDate || bid.deliveryLocation
       ? {
-          deliveryDate: bid.deliveryDate ? new Date(bid.deliveryDate) : undefined,
-          deliveryLocation: bid.deliveryLocation,
-        }
+        deliveryDate: bid.deliveryDate ? new Date(bid.deliveryDate) : undefined,
+        deliveryLocation: bid.deliveryLocation,
+      }
       : lot.delivery,
     compliance: lot.compliance,
     status: 'pending_signature',
@@ -158,9 +158,9 @@ export async function updateContractStatus(
     contract.signedAt = new Date()
     if (additionalData?.signedBy) {
       if (isSeller) {
-        contract.signedBySeller = additionalData.signedBy
+        contract.signedBySeller = new Types.ObjectId(additionalData.signedBy)
       } else if (isBuyer) {
-        contract.signedByBuyer = additionalData.signedBy
+        contract.signedByBuyer = new Types.ObjectId(additionalData.signedBy)
       }
     }
   }
