@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import connectDB from '@/lib/mongodb'
 import { listLots, getUserLots } from '@/lib/lots/service'
 import { auth } from '@clerk/nextjs/server'
+import type { LotStatus } from '@/models/Lot'
 
 export const dynamic = 'force-dynamic'
 
@@ -36,8 +37,8 @@ export async function GET(request: NextRequest) {
       if (!apiKey || apiKey !== expectedApiKey) {
         // If no API key provided, check if user is authenticated
         if (!userId) {
-          return NextResponse.json({ 
-            error: 'Unauthorized. Provide API key via X-API-Key header or Authorization Bearer token' 
+          return NextResponse.json({
+            error: 'Unauthorized. Provide API key via X-API-Key header or Authorization Bearer token'
           }, { status: 401 })
         }
       }
@@ -64,7 +65,7 @@ export async function GET(request: NextRequest) {
 
     const filters = {
       orgId,
-      status: searchParams.get('status') || undefined,
+      status: searchParams.get('status') as LotStatus | undefined,
       type: searchParams.get('type') || undefined,
       minPrice: searchParams.get('minPrice') ? parseFloat(searchParams.get('minPrice')!) : undefined,
       maxPrice: searchParams.get('maxPrice') ? parseFloat(searchParams.get('maxPrice')!) : undefined,
