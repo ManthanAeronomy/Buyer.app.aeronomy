@@ -53,18 +53,18 @@ export default function LotDetail({ lot, onClose, onEdit, onDelete, showActions 
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
       {/* Backdrop */}
-      <div 
-        className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm transition-opacity" 
+      <div
+        className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm transition-opacity"
         onClick={onClose}
       />
 
       {/* Slide-over Panel */}
       <div className="relative w-full max-w-2xl bg-white h-full shadow-2xl overflow-y-auto flex flex-col animate-in slide-in-from-right duration-300">
-        
+
         {/* Header */}
         <div className="sticky top-0 z-10 bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <button 
+            <button
               onClick={onClose}
               className="p-2 rounded-full hover:bg-slate-100 text-slate-500 transition-colors"
             >
@@ -75,17 +75,17 @@ export default function LotDetail({ lot, onClose, onEdit, onDelete, showActions 
               <p className="text-xs text-slate-500">ID: {lot._id}</p>
             </div>
           </div>
-          
+
           {showActions && (
             <div className="flex items-center gap-2">
-              <button 
+              <button
                 onClick={() => onEdit?.(lot)}
                 className="p-2 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-blue-600 transition-colors"
                 title="Edit Lot"
               >
                 <Edit className="h-4 w-4" />
               </button>
-              <button 
+              <button
                 onClick={() => {
                   if (confirm('Are you sure you want to delete this lot?')) {
                     onDelete?.(lot._id)
@@ -103,7 +103,7 @@ export default function LotDetail({ lot, onClose, onEdit, onDelete, showActions 
 
         {/* Content */}
         <div className="p-6 space-y-8 flex-1">
-          
+
           {/* Main Info Card */}
           <div className="bg-slate-50 rounded-xl p-6 border border-slate-200">
             <div className="flex items-start justify-between mb-4">
@@ -155,7 +155,7 @@ export default function LotDetail({ lot, onClose, onEdit, onDelete, showActions 
                 </div>
                 <div>
                   <p className="text-xs text-slate-500">Payment Terms</p>
-                  <p className="font-medium text-slate-900">{lot.pricing.paymentTerms || 'Standard Terms'}</p>
+                  <p className="font-medium text-slate-900">{(lot.pricing as any).paymentTerms || 'Standard Terms'}</p>
                 </div>
               </div>
             </div>
@@ -173,7 +173,7 @@ export default function LotDetail({ lot, onClose, onEdit, onDelete, showActions 
                 </div>
                 <div>
                   <p className="text-xs text-slate-500">Delivery Method</p>
-                  <p className="font-medium text-slate-900">{lot.delivery?.deliveryMethod || 'Not specified'}</p>
+                  <p className="font-medium text-slate-900">{(lot.delivery as any)?.deliveryMethod || 'Not specified'}</p>
                 </div>
                 <div>
                   <p className="text-xs text-slate-500">Date Available</p>
@@ -181,7 +181,7 @@ export default function LotDetail({ lot, onClose, onEdit, onDelete, showActions 
                 </div>
                 <div>
                   <p className="text-xs text-slate-500">Incoterms</p>
-                  <p className="font-medium text-slate-900">{lot.delivery?.incoterms || 'N/A'}</p>
+                  <p className="font-medium text-slate-900">{(lot.delivery as any)?.incoterms || 'N/A'}</p>
                 </div>
               </div>
             </div>
@@ -199,8 +199,8 @@ export default function LotDetail({ lot, onClose, onEdit, onDelete, showActions 
                   <p className="text-xs text-slate-500">GHG Reduction</p>
                   <div className="flex items-center gap-2 mt-1">
                     <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-green-500 rounded-full" 
+                      <div
+                        className="h-full bg-green-500 rounded-full"
                         style={{ width: `${lot.compliance?.ghgReduction || 0}%` }}
                       />
                     </div>
@@ -211,17 +211,16 @@ export default function LotDetail({ lot, onClose, onEdit, onDelete, showActions 
                   <p className="text-xs text-slate-500">Sustainability Score</p>
                   <div className="flex items-center gap-1 mt-1">
                     {[1, 2, 3, 4, 5].map((star) => (
-                      <div 
-                        key={star} 
-                        className={`h-2 w-2 rounded-full ${
-                          star <= Math.round((lot.compliance?.sustainabilityScore || 0) / 20) 
-                            ? 'bg-blue-500' 
-                            : 'bg-slate-200'
-                        }`} 
+                      <div
+                        key={star}
+                        className={`h-2 w-2 rounded-full ${star <= Math.round(((lot.compliance as any)?.sustainabilityScore || 0) / 20)
+                          ? 'bg-blue-500'
+                          : 'bg-slate-200'
+                          }`}
                       />
                     ))}
                     <span className="text-xs font-medium text-slate-600 ml-2">
-                      {lot.compliance?.sustainabilityScore || 0}/100
+                      {(lot.compliance as any)?.sustainabilityScore || 0}/100
                     </span>
                   </div>
                 </div>
@@ -253,7 +252,7 @@ export default function LotDetail({ lot, onClose, onEdit, onDelete, showActions 
               <div className="relative">
                 <div className="absolute -left-[21px] top-1 h-3 w-3 rounded-full bg-slate-200 border-2 border-white ring-1 ring-slate-100" />
                 <p className="text-sm text-slate-900 font-medium">Lot Created</p>
-                <p className="text-xs text-slate-500">{formatDate(lot.createdAt)}</p>
+                <p className="text-xs text-slate-500">{formatDate((lot as any).createdAt)}</p>
               </div>
               {lot.publishedAt && (
                 <div className="relative">
@@ -267,10 +266,10 @@ export default function LotDetail({ lot, onClose, onEdit, onDelete, showActions 
           </div>
 
         </div>
-        
+
         {/* Footer Actions */}
         <div className="sticky bottom-0 bg-slate-50 border-t border-slate-200 p-4 flex items-center justify-end gap-3">
-          <button 
+          <button
             onClick={onClose}
             className="px-4 py-2 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
           >
