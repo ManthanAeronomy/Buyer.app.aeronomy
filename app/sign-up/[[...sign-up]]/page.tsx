@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { Eye, EyeOff, Check, Mail, Loader2, AlertCircle } from 'lucide-react'
-import OTPInput from '@/components/OTPInput'
 
 export default function SignUpPage() {
   const log = (...args: unknown[]) => console.log('[SignUp]', ...args)
@@ -554,17 +553,39 @@ export default function SignUpPage() {
                 </p>
               </div>
 
-              {/* OTP Input */}
-              <OTPInput
-                length={6}
-                onComplete={async (code: string) => {
-                  setVerificationCode(code)
-                  // Auto-submit when complete
-                  await handleVerifyEmail(code)
-                }}
-                disabled={isLoading}
-                error={error}
-              />
+
+              {/* Verification Code Input */}
+              <div className="space-y-2">
+                <input
+                  type="text"
+                  placeholder="Enter 6-digit code"
+                  value={verificationCode}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, '').slice(0, 6)
+                    setVerificationCode(value)
+                  }}
+                  disabled={isLoading}
+                  className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-center text-2xl font-mono tracking-widest text-slate-900 placeholder:text-slate-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all disabled:bg-slate-100"
+                  autoComplete="one-time-code"
+                  inputMode="numeric"
+                  maxLength={6}
+                />
+                <button
+                  type="button"
+                  onClick={() => handleVerifyEmail(verificationCode)}
+                  disabled={isLoading || verificationCode.length !== 6}
+                  className="w-full rounded-xl bg-primary-600 py-3 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {isLoading ? (
+                    <span className="flex items-center gap-2 justify-center">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Verifying...
+                    </span>
+                  ) : (
+                    'Verify Email'
+                  )}
+                </button>
+              </div>
 
               {/* Error Message */}
               {error && (
