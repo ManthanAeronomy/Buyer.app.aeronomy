@@ -32,11 +32,11 @@ export default function LotForm({ lot, onClose, onSuccess }: LotFormProps) {
     volumeUnit: lot?.volume?.unit || 'gallons',
     pricePerUnit: getInitialPricePerUnit(),
     currency: lot?.pricing?.currency || 'USD',
-    paymentTerms: lot?.pricing?.paymentTerms || '',
+    paymentTerms: (lot?.pricing as any)?.paymentTerms || '',
     deliveryDate: lot?.delivery?.deliveryDate ? new Date(lot.delivery.deliveryDate).toISOString().split('T')[0] : '',
     deliveryLocation: lot?.delivery?.deliveryLocation || '',
-    deliveryMethod: lot?.delivery?.deliveryMethod || '',
-    incoterms: lot?.delivery?.incoterms || '',
+    deliveryMethod: (lot?.delivery as any)?.deliveryMethod || '',
+    incoterms: (lot?.delivery as any)?.incoterms || '',
     standards: lot?.compliance?.standards?.join(', ') || '',
     ghgReduction: lot?.compliance?.ghgReduction?.toString() || '',
     tags: lot?.tags?.join(', ') || '',
@@ -50,7 +50,7 @@ export default function LotForm({ lot, onClose, onSuccess }: LotFormProps) {
     try {
       const volumeAmount = parseFloat(formData.volumeAmount)
       const pricePerUnit = parseFloat(formData.pricePerUnit)
-      
+
       // Calculate total price from price per unit
       const totalPrice = volumeAmount * pricePerUnit
 
@@ -115,11 +115,11 @@ export default function LotForm({ lot, onClose, onSuccess }: LotFormProps) {
   }
 
   return (
-    <div 
+    <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
       onClick={handleBackdropClick}
     >
-      <div 
+      <div
         className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl border border-slate-200 bg-white shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
