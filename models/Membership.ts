@@ -4,7 +4,7 @@ export type MembershipRole = 'admin' | 'compliance' | 'buyer' | 'finance' | 'vie
 
 export interface IMembership extends Document {
   orgId: Types.ObjectId
-  userId: string
+  userId: Types.ObjectId // MongoDB User reference (not Clerk ID)
   role: MembershipRole
   createdAt: Date
   updatedAt: Date
@@ -13,7 +13,7 @@ export interface IMembership extends Document {
 const MembershipSchema: Schema<IMembership> = new Schema(
   {
     orgId: { type: Schema.Types.ObjectId, ref: 'Organization', required: true, index: true },
-    userId: { type: String, required: true, index: true },
+    userId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true }, // MongoDB User reference
     role: {
       type: String,
       enum: ['admin', 'compliance', 'buyer', 'finance', 'viewer'],

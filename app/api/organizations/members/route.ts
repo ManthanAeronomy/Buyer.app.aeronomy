@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@clerk/nextjs/server'
+import { auth, clerkClient } from '@clerk/nextjs/server'
 import connectDB from '@/lib/mongodb'
 import Membership from '@/models/Membership'
 import User from '@/models/User'
 import Organization from '@/models/Organization'
 import { resolveUserOrgId } from '@/lib/certificates/service'
+import { upsertUser } from '@/lib/user-service'
+import { resolveMongoUserId } from '@/lib/user-resolver'
 
 export const dynamic = 'force-dynamic'
 
@@ -25,17 +27,19 @@ export async function GET(request: NextRequest) {
     }
 
     // Get all memberships for this organization
-    const memberships = await Membership.find({ orgId }).lean()
+    const memberships = await Membership.find({ orgId }).populate('userId', 'clerkId email firstName lastName username').lean()
 
     // Get user details for each membership
     const membersWithDetails = await Promise.all(
       memberships.map(async (membership) => {
-        const user = await User.findOne({ clerkId: membership.userId }).lean()
+        // Membership.userId is now a MongoDB User ObjectId reference (populated)
+        const user = membership.userId as any
+        
         return {
           _id: membership._id.toString(),
-          userId: membership.userId,
+          userId: user?.clerkId || membership.userId.toString(), // Return Clerk ID for backward compatibility
           role: membership.role,
-          email: user?.email || 'Unknown',
+          email: user?.email || 'No email',
           firstName: user?.firstName || '',
           lastName: user?.lastName || '',
           username: user?.username || '',
@@ -67,8 +71,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No organization found' }, { status: 404 })
     }
 
+    // Resolve current user's MongoDB User ObjectId
+    const currentMongoUserId = await resolveMongoUserId(userId)
+    
     // Check if current user is admin
-    const currentMembership = await Membership.findOne({ userId, orgId }).lean()
+    const currentMembership = await Membership.findOne({ userId: currentMongoUserId, orgId }).lean()
     if (!currentMembership || currentMembership.role !== 'admin') {
       return NextResponse.json({ error: 'Only admins can add members' }, { status: 403 })
     }
@@ -86,22 +93,25 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid role' }, { status: 400 })
     }
 
-    // Check if user exists
-    const user = await User.findOne({ clerkId: clerkUserId }).lean()
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 })
-    }
+    // Resolve Clerk userId to MongoDB User ObjectId (creates user if doesn't exist)
+    const mongoUserId = await resolveMongoUserId(clerkUserId)
 
     // Check if membership already exists
-    const existingMembership = await Membership.findOne({ userId: clerkUserId, orgId }).lean()
+    const existingMembership = await Membership.findOne({ userId: mongoUserId, orgId }).lean()
     if (existingMembership) {
       return NextResponse.json({ error: 'User is already a member of this organization' }, { status: 400 })
     }
 
-    // Create membership
+    // Get user details for response
+    const user = await User.findById(mongoUserId).lean()
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
+
+    // Create membership with MongoDB User ObjectId reference
     const membership = new Membership({
       orgId,
-      userId: clerkUserId,
+      userId: mongoUserId, // MongoDB User ObjectId reference
       role,
     })
 
@@ -123,6 +133,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: error.message || 'Failed to add member' }, { status: 500 })
   }
 }
+
+
+
+
+
+
+
+
+
+
 
 
 

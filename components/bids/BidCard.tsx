@@ -6,9 +6,10 @@ import { Bid } from './BidList'
 interface BidCardProps {
   bid: Bid
   onStatusUpdate: (bidId: string, status: 'accepted' | 'rejected') => void
+  viewMode?: 'seller' | 'buyer'
 }
 
-export default function BidCard({ bid, onStatusUpdate }: BidCardProps) {
+export default function BidCard({ bid, onStatusUpdate, viewMode = 'seller' }: BidCardProps) {
   const formatCurrency = (amount: number, currency: string) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -194,7 +195,7 @@ export default function BidCard({ bid, onStatusUpdate }: BidCardProps) {
           )}
 
           {/* Actions */}
-          {isPending && (
+          {isPending && viewMode === 'seller' && (
             <div className="flex gap-2 pt-4 border-t border-slate-200">
               <button
                 onClick={() => {
@@ -219,6 +220,12 @@ export default function BidCard({ bid, onStatusUpdate }: BidCardProps) {
                 Reject Bid
               </button>
             </div>
+          )}
+
+          {isPending && viewMode === 'buyer' && (
+             <div className="pt-4 border-t border-slate-200 text-sm text-slate-500 italic">
+                Waiting for seller response...
+             </div>
           )}
 
           {!isPending && bid.respondedAt && (

@@ -52,3 +52,13 @@ export default async function CertificateDetailPage({ params }: Params) {
 
 
 
+
+
+
+
+
+
+
+
+
+

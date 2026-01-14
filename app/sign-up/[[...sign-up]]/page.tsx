@@ -4,7 +4,8 @@ import { useSignUp } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
 import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
-import { Eye, EyeOff, Check } from 'lucide-react'
+import { Eye, EyeOff, Check, Mail, Loader2, AlertCircle } from 'lucide-react'
+import OTPInput from '@/components/OTPInput'
 
 export default function SignUpPage() {
   const log = (...args: unknown[]) => console.log('[SignUp]', ...args)
@@ -22,6 +23,7 @@ export default function SignUpPage() {
   const [pendingVerification, setPendingVerification] = useState(false)
   const [verificationCode, setVerificationCode] = useState('')
   const [resendCooldown, setResendCooldown] = useState(0)
+  const [showOptionalOnboarding, setShowOptionalOnboarding] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
 
   // Ensure video plays - multiple attempts
@@ -78,14 +80,17 @@ export default function SignUpPage() {
     number: /[0-9]/.test(password),
   }
 
-  const handleVerifyEmail = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleVerifyEmail = async (code?: string) => {
+    const codeToUse = code || verificationCode
     
-    if (!isLoaded || !verificationCode) {
-      logVerify('blocked: verification attempted without loaded clerk or missing code', {
+    if (!isLoaded || !codeToUse || codeToUse.length !== 6) {
+      logVerify('blocked: verification attempted without loaded clerk or invalid code', {
         isLoaded,
-        verificationCode,
+        verificationCode: codeToUse,
       })
+      if (codeToUse && codeToUse.length !== 6) {
+        setError('Please enter a complete 6-digit code')
+      }
       return
     }
 
@@ -93,10 +98,10 @@ export default function SignUpPage() {
     setError('')
 
     try {
-      logVerify('attemptEmailAddressVerification start', { verificationCode })
+      logVerify('attemptEmailAddressVerification start', { verificationCode: codeToUse })
       
       const result = await signUp.attemptEmailAddressVerification({
-        code: verificationCode,
+        code: codeToUse,
       })
 
       logVerify('verification response', {
@@ -131,9 +136,10 @@ export default function SignUpPage() {
               }
             }
 
-            logVerify('redirecting to dashboard')
-            // Force a full page reload to ensure Clerk session is properly loaded
-            window.location.replace('/dashboard')
+            logVerify('showing optional onboarding step')
+            // Show optional onboarding step instead of immediately redirecting
+            setPendingVerification(false)
+            setShowOptionalOnboarding(true)
           } catch (sessionErr: any) {
             console.error('[SignUp][Verify] Failed to activate session:', sessionErr)
             setError('Account created but failed to sign you in. Please try signing in manually.')
@@ -157,15 +163,10 @@ export default function SignUpPage() {
           responseKeys: Object.keys(result || {}),
         })
 
-        // Provide more specific error messages
-        let errorMessage = `Verification failed: ${result.status}`
-        if (result.status === 'failed') {
-          errorMessage = 'Invalid verification code. Please check and try again.'
-        } else if (result.status === 'expired') {
-          errorMessage = 'Verification code has expired. Please request a new one.'
-        } else if (result.status === 'already_verified') {
-          errorMessage = 'Email is already verified. Please try signing in.'
-        }
+        // Provide error message based on status
+        const errorMessage = result.status === 'missing_requirements'
+          ? 'Verification incomplete. Please try again.'
+          : `Verification failed. Status: ${result.status}. Please check your code and try again.`
 
         setError(errorMessage)
         // Don't redirect - let user try again
@@ -258,8 +259,8 @@ export default function SignUpPage() {
           }
         }
 
-        log('redirecting to /dashboard')
-        router.push('/dashboard')
+        log('showing optional onboarding step')
+        setShowOptionalOnboarding(true)
       } else if (result.status === 'missing_requirements') {
         log('missing requirements detected', {
           requiredFields: result.requiredFields,
@@ -288,8 +289,8 @@ export default function SignUpPage() {
               }
             }
 
-            log('redirecting to /dashboard (instant verification)')
-            router.push('/dashboard')
+            log('showing optional onboarding step (instant verification)')
+            setShowOptionalOnboarding(true)
             return
           }
         } catch (instantErr: any) {
@@ -318,20 +319,7 @@ export default function SignUpPage() {
             if (verifyErr?.errors) {
               log('verification prep error details', verifyErr.errors)
             }
-            // Try email_link as fallback
-            try {
-              log('trying email_link as fallback')
-              const linkResult = await signUp.prepareEmailAddressVerification({ strategy: 'email_link' })
-              log('prepareEmailAddressVerification(email_link) success', linkResult)
-              setPendingVerification(true)
-              setError('Please check your email and click the verification link.')
-            } catch (linkErr: any) {
-              console.error('[SignUp] prepareEmailAddressVerification(email_link) failed', linkErr)
-              if (linkErr?.errors) {
-                log('email_link error details', linkErr.errors)
-              }
-              setError('Failed to send verification email. Please try again.')
-            }
+            setError('Failed to send verification email. Please try again.')
           }
         } else {
           // Other missing requirements
@@ -369,8 +357,63 @@ export default function SignUpPage() {
             </p>
           </div>
 
-          {/* Form / Verification */}
-          {!pendingVerification ? (
+          {/* Form / Verification / Optional Onboarding */}
+          {showOptionalOnboarding ? (
+            <div className="space-y-6">
+              {/* Optional Onboarding Step */}
+              <div className="mb-6">
+                <h2 className="text-2xl font-light text-slate-800 mb-3">
+                  Welcome to Aeronomy!
+                </h2>
+                <p className="text-slate-500 text-sm leading-relaxed">
+                  Your account has been created successfully. You can complete your organization setup now or finish it later from your dashboard.
+                </p>
+              </div>
+
+              <div className="bg-blue-50/50 rounded-xl p-6 space-y-4 border border-blue-100">
+                <h3 className="text-lg font-medium text-slate-800">
+                  Complete Your Profile
+                </h3>
+                <p className="text-sm text-slate-600">
+                  Set up your organization details, upload compliance documents, and configure your SAF trading preferences to get started.
+                </p>
+                <ul className="text-sm text-slate-600 space-y-2 list-disc list-inside">
+                  <li>Organization details and corporate structure</li>
+                  <li>Compliance & KYB documentation</li>
+                  <li>SAF demand and procurement preferences</li>
+                  <li>Financial and sustainability settings</li>
+                </ul>
+              </div>
+
+              {/* Error Message */}
+              {error && (
+                <div className="p-4 rounded-xl bg-red-50 border border-red-100 text-red-600 text-sm">
+                  {error}
+                </div>
+              )}
+
+              <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    window.location.replace('/dashboard')
+                  }}
+                  className="flex-1 py-4 px-6 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-xl transition-all shadow-sm hover:shadow disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Skip for Now
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    window.location.replace('/onboarding')
+                  }}
+                  className="flex-1 py-4 px-6 bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-700 hover:to-primary-600 text-white font-medium rounded-xl transition-all shadow-lg shadow-primary-500/25 hover:shadow-xl hover:shadow-primary-500/30 transform hover:-translate-y-0.5 active:translate-y-0"
+                >
+                  Continue Setup
+                </button>
+              </div>
+            </div>
+          ) : !pendingVerification ? (
             <form onSubmit={handleSubmit} className="space-y-5">
               {/* Clerk CAPTCHA container (hides warning) */}
               <div id="clerk-captcha" className="hidden"></div>
@@ -496,62 +539,83 @@ export default function SignUpPage() {
               </p>
             </form>
           ) : (
-            <form onSubmit={handleVerifyEmail} className="space-y-5">
-              <div className="space-y-4 p-4 rounded-xl bg-blue-50 border border-blue-100">
-                <p className="text-sm font-medium text-blue-900">
-                  Enter the 6-digit code we sent to <strong>{email}</strong>
+            <div className="space-y-6">
+              {/* Header */}
+              <div className="mb-6">
+                <h2 className="text-2xl font-light text-slate-800 mb-3">
+                  Verify Your Email
+                </h2>
+                <p className="text-slate-500 text-sm">
+                  We&apos;ve sent a 6-digit verification code to
                 </p>
-                <input
-                  type="text"
-                  value={verificationCode}
-                  onChange={(e) => setVerificationCode(e.target.value)}
-                  placeholder="Enter verification code"
-                  required
-                  suppressHydrationWarning
-                  className="w-full px-4 py-3 rounded-xl bg-white border border-blue-200 text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 outline-none transition-all"
-                />
-                <button
-                  type="submit"
-                  disabled={isLoading || !isLoaded || !verificationCode}
-                  className="w-full py-3 px-6 bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-700 hover:to-primary-600 text-white font-medium rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isLoading ? 'Verifying...' : 'Verify Email'}
-                </button>
-                <div className="flex items-center justify-between pt-2">
-                  <p className="text-xs text-blue-600">
-                    Didn&apos;t receive the code?
-                  </p>
-                  <button
-                    type="button"
-                    onClick={handleResendCode}
-                    disabled={isLoading || !isLoaded || resendCooldown > 0}
-                    className="text-xs text-primary-600 hover:text-primary-700 font-medium disabled:text-slate-400 disabled:cursor-not-allowed transition-colors"
-                  >
-                    {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend Code'}
-                  </button>
-                </div>
+                <p className="text-slate-700 font-medium mt-1 flex items-center gap-2">
+                  <Mail className="h-4 w-4" />
+                  {email}
+                </p>
               </div>
 
+              {/* OTP Input */}
+              <OTPInput
+                length={6}
+                onComplete={async (code: string) => {
+                  setVerificationCode(code)
+                  // Auto-submit when complete
+                  await handleVerifyEmail(code)
+                }}
+                disabled={isLoading}
+                error={error}
+              />
+
+              {/* Error Message */}
+              {error && (
+                <div className="flex items-start gap-2 p-4 rounded-xl bg-red-50 border border-red-100 text-red-600 text-sm">
+                  <AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
+                  <span>{error}</span>
+                </div>
+              )}
+
               {/* Success Message */}
-              {!error && (
+              {!error && verificationCode.length === 0 && (
                 <div className="p-4 rounded-xl bg-blue-50 border border-blue-100 text-blue-700 text-sm">
                   <p className="font-medium mb-1">Verification email sent!</p>
                   <p>Please check your inbox for the verification code.</p>
                 </div>
               )}
 
-              {/* Error Message */}
-              {error && (
-                <div className="p-4 rounded-xl bg-red-50 border border-red-100 text-red-600 text-sm">
-                  {error}
-                </div>
-              )}
+              {/* Resend Section */}
+              <div className="text-center space-y-3">
+                <p className="text-sm text-slate-500">
+                  Didn&apos;t receive the code?
+                </p>
+                <button
+                  type="button"
+                  onClick={handleResendCode}
+                  disabled={isLoading || !isLoaded || resendCooldown > 0}
+                  className="text-sm font-medium text-primary-600 hover:text-primary-700 disabled:text-slate-400 disabled:cursor-not-allowed transition-colors"
+                >
+                  {isLoading ? (
+                    <span className="flex items-center gap-2 justify-center">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Sending...
+                    </span>
+                  ) : resendCooldown > 0 ? (
+                    `Resend code in ${resendCooldown}s`
+                  ) : (
+                    'Resend verification code'
+                  )}
+                </button>
+              </div>
 
-              <p className="text-center text-sm text-slate-500 pt-2">
-                Need help?{' '}
-                <span className="font-semibold text-primary-600">Check your spam folder or resend the code.</span>
-              </p>
-            </form>
+              {/* Back to Sign In */}
+              <div className="pt-4 border-t border-slate-200">
+                <p className="text-center text-sm text-slate-500">
+                  Wrong email?{' '}
+                  <Link href="/sign-in" className="text-primary-600 hover:text-primary-700 font-medium">
+                    Sign in with a different account
+                  </Link>
+                </p>
+              </div>
+            </div>
           )}
         </div>
       </div>

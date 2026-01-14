@@ -187,7 +187,25 @@ export interface IOrganization extends Document {
   billingEmail?: string
   plan?: string
   branding?: IOrganizationBranding
-  
+
+  // Simplified onboarding fields
+  userName?: string
+  companyEmail?: string
+  teamSize?: string
+  headquarters?: string
+  entityType?: string
+  organizationType?: string
+  intent?: string
+  volumeRange?: string
+  requirements?: string
+  targetAirports?: string[]
+  emailPreferences?: {
+    marketingEmails: boolean
+    bidNotifications: boolean
+    contractUpdates: boolean
+    securityAlerts: boolean
+  }
+
   // Onboarding Data
   onboardingStatus: OnboardingStatus
   legalEntity?: ILegalEntity
@@ -205,7 +223,7 @@ export interface IOrganization extends Document {
   sustainability?: ISustainability
   governance?: IGovernance
   integrations?: IIntegrations
-  
+
   createdAt: Date
   updatedAt: Date
 }
@@ -225,12 +243,30 @@ const OrganizationSchema: Schema<IOrganization> = new Schema(
     billingEmail: { type: String, trim: true, lowercase: true },
     plan: { type: String, trim: true },
     branding: { type: BrandingSchema, default: undefined },
-    
-    onboardingStatus: { 
-      type: String, 
-      enum: ['pending', 'in_progress', 'completed'], 
+
+    // Simplified onboarding fields
+    userName: { type: String, trim: true },
+    companyEmail: { type: String, trim: true, lowercase: true },
+    teamSize: { type: String, trim: true },
+    headquarters: { type: String, trim: true },
+    entityType: { type: String, trim: true },
+    organizationType: { type: String, trim: true },
+    intent: { type: String, trim: true },
+    volumeRange: { type: String, trim: true },
+    requirements: { type: String, trim: true },
+    targetAirports: [{ type: String, trim: true }],
+    emailPreferences: {
+      marketingEmails: { type: Boolean, default: true },
+      bidNotifications: { type: Boolean, default: true },
+      contractUpdates: { type: Boolean, default: true },
+      securityAlerts: { type: Boolean, default: true },
+    },
+
+    onboardingStatus: {
+      type: String,
+      enum: ['pending', 'in_progress', 'completed'],
       default: 'pending',
-      index: true 
+      index: true
     },
 
     // Nested Schemas
@@ -403,6 +439,16 @@ const Organization: Model<IOrganization> =
   mongoose.models.Organization || mongoose.model<IOrganization>('Organization', OrganizationSchema)
 
 export default Organization
+
+
+
+
+
+
+
+
+
+
 
 
 

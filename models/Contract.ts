@@ -53,8 +53,8 @@ export interface IContract extends Document {
   // Status and dates
   status: ContractStatus
   signedAt?: Date
-  signedBySeller?: string // Clerk userId
-  signedByBuyer?: string // Clerk userId or external ID
+  signedBySeller?: Types.ObjectId // MongoDB User who signed as seller (reference to User)
+  signedByBuyer?: Types.ObjectId // MongoDB User who signed as buyer (reference to User)
   completedAt?: Date
   
   // Contract terms
@@ -120,8 +120,8 @@ const ContractSchema: Schema<IContract> = new Schema(
       index: true,
     },
     signedAt: { type: Date },
-    signedBySeller: { type: String },
-    signedByBuyer: { type: String },
+    signedBySeller: { type: Schema.Types.ObjectId, ref: 'User' }, // MongoDB User reference
+    signedByBuyer: { type: Schema.Types.ObjectId, ref: 'User' }, // MongoDB User reference
     completedAt: { type: Date },
     terms: { type: String, trim: true },
     attachments: [{ type: String, trim: true }],

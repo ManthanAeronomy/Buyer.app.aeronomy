@@ -1,6 +1,7 @@
 import { Types } from 'mongoose'
 import Lot, { ILot, LotStatus, LotType } from '@/models/Lot'
 import { resolveUserOrgId } from '@/lib/certificates/service'
+import { resolveMongoUserId } from '@/lib/user-resolver'
 import { notifyLotCreated, notifyLotUpdated, notifyLotDeleted } from '@/lib/webhooks/lot-webhook'
 import connectDB from '@/lib/mongodb'
 import Organization from '@/models/Organization'
@@ -105,10 +106,13 @@ export async function createLot(userId: string, lotData: Partial<ILot>) {
     throw new Error('No organization membership found')
   }
 
+  // Resolve Clerk userId to MongoDB User ObjectId
+  const mongoUserId = await resolveMongoUserId(userId)
+
   const lot = new Lot({
     ...lotData,
     orgId: new Types.ObjectId(orgId),
-    postedBy: userId, // Store Clerk userId as string
+    postedBy: mongoUserId, // MongoDB User ObjectId reference
     status: lotData.status || 'draft',
   })
 

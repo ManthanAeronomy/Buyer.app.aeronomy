@@ -150,3 +150,13 @@ export default function CertificateDetailClient({ initialCertificate }: Certific
 
 
 
+
+
+
+
+
+
+
+
+
+

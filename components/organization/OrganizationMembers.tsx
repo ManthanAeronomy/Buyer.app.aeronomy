@@ -273,10 +273,12 @@ export default function OrganizationMembers() {
                         <div className="text-sm font-medium text-slate-900">
                           {member.firstName || member.lastName
                             ? `${member.firstName || ''} ${member.lastName || ''}`.trim()
-                            : member.username || 'Unknown User'}
+                            : member.username || member.email || 'User'}
                         </div>
-                        <div className="text-sm text-slate-500">{member.email}</div>
-                        <div className="text-xs text-slate-400 mt-1">{member.userId}</div>
+                        {member.email && member.email !== 'No email' && (
+                          <div className="text-sm text-slate-500">{member.email}</div>
+                        )}
+                        <div className="text-xs text-slate-400 mt-1">ID: {member.userId.slice(0, 12)}...</div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -353,6 +355,16 @@ export default function OrganizationMembers() {
     </div>
   )
 }
+
+
+
+
+
+
+
+
+
+
 
 
 

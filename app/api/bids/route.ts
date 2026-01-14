@@ -4,6 +4,7 @@ import connectDB from '@/lib/mongodb'
 import Bid, { IBid } from '@/models/Bid'
 import Lot from '@/models/Lot'
 import { resolveUserOrgId } from '@/lib/certificates/service'
+import { resolveMongoUserId } from '@/lib/user-resolver'
 
 export const dynamic = 'force-dynamic'
 
@@ -26,13 +27,20 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams
     const lotId = searchParams.get('lotId')
     const status = searchParams.get('status')
+    const type = searchParams.get('type') // 'sent' or 'received'
 
-    // Find all lots owned by user's organization
-    const userLots = await Lot.find({ orgId }).select('_id').lean()
-    const lotIds = userLots.map((lot) => lot._id)
+    let query: any = {}
 
-    // Build query
-    const query: any = { lotId: { $in: lotIds } }
+    if (type === 'sent') {
+      // Find bids where the current user is the bidder (resolve Clerk userId to MongoDB User ObjectId)
+      const mongoUserId = await resolveMongoUserId(userId)
+      query.bidderId = mongoUserId
+    } else {
+      // Default: Find bids on lots owned by user's organization (Received)
+      const userLots = await Lot.find({ orgId }).select('_id').lean()
+      const lotIds = userLots.map((lot) => lot._id)
+      query.lotId = { $in: lotIds }
+    }
 
     if (lotId) {
       query.lotId = lotId
@@ -44,6 +52,7 @@ export async function GET(request: NextRequest) {
 
     const bids = await Bid.find(query)
       .populate('lotId', 'title volume pricing status')
+      .populate('bidderId', 'firstName lastName email username') // Populate MongoDB User reference
       .sort({ createdAt: -1 })
       .lean()
 
@@ -89,6 +98,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Resolve bidderId (Clerk userId) to MongoDB User ObjectId
+    const mongoBidderId = await resolveMongoUserId(bidderId)
+
     // Verify lot exists and is published
     const lot = await Lot.findById(lotId)
     if (!lot) {
@@ -116,12 +128,12 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Create bid
+    // Create bid with MongoDB User ObjectId reference
     const bid = await Bid.create({
       lotId,
-      bidderId,
-      bidderName,
-      bidderEmail,
+      bidderId: mongoBidderId, // MongoDB User ObjectId reference
+      bidderName, // Keep for display/backward compatibility
+      bidderEmail, // Keep for display/backward compatibility
       volume,
       pricing,
       status: 'pending',
@@ -143,6 +155,7 @@ export async function POST(request: NextRequest) {
 
     const populatedBid = await Bid.findById(bid._id)
       .populate('lotId', 'title volume pricing status')
+      .populate('bidderId', 'firstName lastName email username') // Populate MongoDB User reference
       .lean()
 
     return NextResponse.json({ bid: populatedBid }, { status: 201 })

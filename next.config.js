@@ -5,6 +5,7 @@ const nextConfig = {
     domains: [],
     remotePatterns: [],
   },
+  output: 'standalone',
 }
 
 module.exports = nextConfig

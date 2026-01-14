@@ -3,6 +3,7 @@ import { auth } from '@clerk/nextjs/server'
 import connectDB from '@/lib/mongodb'
 import Certificate, { ICertificate } from '@/models/Certificate'
 import Membership from '@/models/Membership'
+import { resolveMongoUserId } from '@/lib/user-resolver'
 import { computeFileChecksum, extractCertificateData } from './extractor'
 import { determineCertificateStatus } from './status'
 import { persistFile, buildPublicUrl } from '@/lib/storage'
@@ -16,9 +17,11 @@ interface CreateCertificateInput {
   orgId?: string
 }
 
-export async function resolveUserOrgId(userId: string) {
+export async function resolveUserOrgId(clerkUserId: string) {
   await connectDB()
-  const membership = await Membership.findOne({ userId }).lean()
+  // Resolve Clerk userId to MongoDB User ObjectId
+  const mongoUserId = await resolveMongoUserId(clerkUserId)
+  const membership = await Membership.findOne({ userId: mongoUserId }).lean()
   return membership?.orgId?.toString()
 }
 

@@ -1,76 +1,116 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import DashboardSignOutButton from '@/components/DashboardSignOutButton'
+import DashboardHome from '@/components/dashboard/DashboardHome'
 import LotList from '@/components/marketplace/LotList'
-import SetupTestOrgButton from '@/components/marketplace/SetupTestOrgButton'
+import ProducerList from '@/components/marketplace/ProducerList'
 import OrganizationMembers from '@/components/organization/OrganizationMembers'
 import BidList from '@/components/bids/BidList'
 import ContractList from '@/components/contracts/ContractList'
-import DashboardNavbar from '@/components/dashboard/DashboardNavbar'
+import DashboardSidebar from '@/components/dashboard/DashboardSidebar'
+import DashboardHeader from '@/components/dashboard/DashboardHeader'
+import DashboardFooter from '@/components/dashboard/DashboardFooter'
+import MarketplaceOverview from '@/components/marketplace/MarketplaceOverview'
 
 export default function DashboardPage() {
-  const [activeTab, setActiveTab] = useState<'marketplace' | 'my-lots' | 'organization' | 'bids' | 'contracts'>('marketplace')
+  const searchParams = useSearchParams()
+  const tabParam = searchParams.get('tab')
+  const [activeTab, setActiveTab] = useState<'home' | 'marketplace' | 'producers' | 'my-lots' | 'organization' | 'bids' | 'contracts'>('home')
+  const [orgType, setOrgType] = useState<string | null>(null)
+
+  useEffect(() => {
+    // Fetch organization type
+    fetch('/api/organization/profile')
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.type) {
+          setOrgType(data.type)
+        }
+      })
+      .catch(err => console.error('Failed to fetch org type', err))
+  }, [])
+
+  useEffect(() => {
+    if (tabParam && ['home', 'marketplace', 'producers', 'my-lots', 'organization', 'bids', 'contracts'].includes(tabParam)) {
+      setActiveTab(tabParam as any)
+    }
+  }, [tabParam])
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50">
-      {/* Top Navigation */}
-      <DashboardNavbar activeTab={activeTab} onTabChange={setActiveTab} />
+    <div className="flex h-screen bg-slate-50 overflow-hidden">
+      {/* Sidebar Navigation */}
+      <DashboardSidebar activeTab={activeTab} onTabChange={setActiveTab} organizationType={orgType} />
 
-      {/* Main Content */}
-      <div className="flex flex-1 flex-col">
-        {/* Header */}
-        <header className="border-b border-slate-200 bg-white">
-          <div className="mx-auto max-w-7xl px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-2xl font-semibold text-slate-900">
-                  {activeTab === 'marketplace' && 'Marketplace'}
-                  {activeTab === 'my-lots' && 'My Lots'}
-                  {activeTab === 'organization' && 'Organization'}
-                  {activeTab === 'bids' && 'Bids Received'}
-                  {activeTab === 'contracts' && 'Contracts'}
-                </h1>
-                <p className="mt-1 text-sm text-slate-500">
-                  {activeTab === 'marketplace' && 'Browse available SAF lots from airlines'}
-                  {activeTab === 'my-lots' && 'Manage your posted lots'}
-                  {activeTab === 'organization' && 'Manage organization members and settings'}
-                  {activeTab === 'bids' && 'View and manage bids on your lots'}
-                  {activeTab === 'contracts' && 'View and manage contracts from accepted bids'}
-                </p>
-              </div>
-              <div className="flex items-center gap-4">
-                <SetupTestOrgButton />
-                <DashboardSignOutButton />
-              </div>
-            </div>
-          </div>
-        </header>
+      {/* Main Content Area */}
+      <div className="flex flex-1 flex-col overflow-hidden">
+        {/* Top Header Bar */}
+        <DashboardHeader activeTab={activeTab} />
 
-        {/* Content Area */}
-        <main className="flex-1 overflow-y-auto bg-slate-50">
-          <div className="mx-auto max-w-7xl px-6 py-6">
-            {activeTab === 'organization' ? (
-              <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-                <OrganizationMembers />
+        {/* Content Scroll Area */}
+        <main className="flex-1 overflow-y-auto bg-slate-50/50 flex flex-col">
+          <div className="p-6 mx-auto max-w-7xl w-full flex-1">
+            {activeTab === 'home' ? (
+              <DashboardHome />
+            ) : activeTab === 'marketplace' ? (
+              // For Airlines (Buyers), show the Trading Desk (Overview)
+              // For others, show only their own lots
+              orgType === 'airline' ? (
+                <div className="rounded-lg border border-slate-200 bg-white shadow-sm">
+                  <div className="p-6">
+                    <MarketplaceOverview organizationType={orgType} />
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded-lg border border-slate-200 bg-white shadow-sm">
+                  <div className="p-6">
+                    <LotList
+                      showCreateButton={true}
+                      showMyLots={true}
+                    />
+                  </div>
+                </div>
+              )
+            ) : activeTab === 'producers' ? (
+              <div className="flex h-full flex-col">
+                <div className="rounded-lg border border-slate-200 bg-white shadow-sm flex-1 overflow-hidden flex flex-col">
+                  <div className="p-6 overflow-y-auto">
+                    <ProducerList />
+                  </div>
+                </div>
+              </div>
+            ) : activeTab === 'organization' ? (
+              <div className="rounded-lg border border-slate-200 bg-white shadow-sm">
+                <div className="p-6">
+                  <OrganizationMembers />
+                </div>
               </div>
             ) : activeTab === 'bids' ? (
-              <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-                <BidList />
+              <div className="rounded-lg border border-slate-200 bg-white shadow-sm">
+                <div className="p-6">
+                  <BidList />
+                </div>
               </div>
             ) : activeTab === 'contracts' ? (
-              <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-                <ContractList />
+              <div className="rounded-lg border border-slate-200 bg-white shadow-sm">
+                <div className="p-6">
+                  <ContractList />
+                </div>
               </div>
             ) : (
-              <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-                <LotList
-                  showCreateButton={true}
-                  showMyLots={activeTab === 'my-lots'}
-                />
+              <div className="rounded-lg border border-slate-200 bg-white shadow-sm">
+                <div className="p-6">
+                  <LotList
+                    showCreateButton={true}
+                    showMyLots={activeTab === 'my-lots'}
+                  />
+                </div>
               </div>
             )}
           </div>
+          
+          <DashboardFooter />
         </main>
       </div>
     </div>

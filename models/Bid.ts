@@ -18,10 +18,10 @@ export interface IBid extends Document {
   // Lot reference
   lotId: Types.ObjectId // Reference to the Lot
   
-  // Bidder information (from external system on port 3004)
-  bidderId: string // External bidder ID
-  bidderName?: string // Bidder organization/company name
-  bidderEmail?: string // Bidder contact email
+  // Bidder information
+  bidderId: Types.ObjectId // MongoDB User who placed the bid (reference to User)
+  bidderName?: string // Bidder organization/company name (for display/backward compatibility)
+  bidderEmail?: string // Bidder contact email (for display/backward compatibility)
   
   // Bid details
   volume: IBidVolume // Volume being bid for
@@ -66,9 +66,9 @@ const BidPricingSchema = new Schema<IBidPricing>(
 const BidSchema: Schema<IBid> = new Schema(
   {
     lotId: { type: Schema.Types.ObjectId, ref: 'Lot', required: true, index: true },
-    bidderId: { type: String, required: true, index: true },
-    bidderName: { type: String, trim: true },
-    bidderEmail: { type: String, trim: true, lowercase: true },
+    bidderId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true }, // MongoDB User reference
+    bidderName: { type: String, trim: true }, // For display/backward compatibility
+    bidderEmail: { type: String, trim: true, lowercase: true }, // For display/backward compatibility
     volume: { type: BidVolumeSchema, required: true },
     pricing: { type: BidPricingSchema, required: true },
     status: {

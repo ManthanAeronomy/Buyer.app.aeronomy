@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import connectDB from '@/lib/mongodb'
 import Organization from '@/models/Organization'
+import Membership from '@/models/Membership'
 import { resolveUserOrgId } from '@/lib/certificates/service'
+import { resolveMongoUserId } from '@/lib/user-resolver'
 
 export async function GET(req: NextRequest) {
     try {
@@ -13,7 +15,7 @@ export async function GET(req: NextRequest) {
 
         await connectDB()
         const orgId = await resolveUserOrgId(userId)
-        
+
         // If no organization found, return specific status to let frontend know it's a new setup
         if (!orgId) {
             return NextResponse.json({ isNew: true })
@@ -25,14 +27,33 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ isNew: true })
         }
 
-        return NextResponse.json(organization)
+        // Get user's role from membership (resolve Clerk userId to MongoDB User ObjectId)
+        const mongoUserId = await resolveMongoUserId(userId)
+        const membership = await Membership.findOne({ orgId: organization._id, userId: mongoUserId }).lean()
+        const userRole = membership?.role || 'admin'
+
+        // Return organization with user role
+        return NextResponse.json({
+            ...organization.toObject(),
+            userRole,
+            userName: organization.userName,
+            companyName: organization.name,
+            companyEmail: organization.companyEmail,
+            teamSize: organization.teamSize,
+            headquarters: organization.headquarters,
+            entityType: organization.entityType,
+            organizationType: organization.organizationType,
+            intent: organization.intent,
+            volumeRange: organization.volumeRange,
+            requirements: organization.requirements,
+            targetAirports: organization.targetAirports,
+            emailPreferences: organization.emailPreferences,
+        })
     } catch (error) {
         console.error('Error fetching organization profile:', error)
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
     }
 }
-
-import Membership from '@/models/Membership'
 
 export async function PUT(req: NextRequest) {
     try {
@@ -44,31 +65,44 @@ export async function PUT(req: NextRequest) {
         const body = await req.json()
         await connectDB()
         let orgId = await resolveUserOrgId(userId)
-        
+
         let organization;
 
         // Create new organization if one doesn't exist
         if (!orgId) {
             // Validate minimum requirements for creation
-            if (!body.legalEntity?.legalName) {
-                return NextResponse.json({ error: 'Legal Name is required to create organization' }, { status: 400 })
+            if (!body.name) {
+                return NextResponse.json({ error: 'Company name is required to create organization' }, { status: 400 })
             }
 
-            // Create Organization
+            // Create Organization with simplified data
             organization = await Organization.create({
-                name: body.legalEntity.legalName,
-                type: 'airline', // Default to airline for this flow
+                name: body.name,
+                type: body.organizationType || 'airline', // Use the selected organization type
                 onboardingStatus: 'in_progress',
-                legalEntity: body.legalEntity,
-                // Map other fields if provided
-                ...body
+                // Store simplified data in legalEntity for backward compatibility
+                legalEntity: {
+                    legalName: body.name,
+                },
+                // Store additional fields
+                userName: body.userName,
+                companyEmail: body.companyEmail,
+                teamSize: body.teamSize,
+                headquarters: body.headquarters,
+                entityType: body.entityType,
+                organizationType: body.organizationType,
+                intent: body.intent,
+                volumeRange: body.volumeRange,
+                requirements: body.requirements,
+                targetAirports: body.targetAirports || [],
             })
 
-            // Create Membership (Admin role for creator)
+            // Create Membership with admin role by default (resolve Clerk userId to MongoDB User ObjectId)
+            const mongoUserId = await resolveMongoUserId(userId)
             await Membership.create({
                 orgId: organization._id,
-                userId,
-                role: body.userRole || 'admin' // Use provided role or default to admin
+                userId: mongoUserId, // MongoDB User ObjectId reference
+                role: 'admin'
             })
 
             orgId = organization._id.toString()
@@ -78,24 +112,62 @@ export async function PUT(req: NextRequest) {
                 return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
             }
 
-            // Update fields
-            if (body.legalEntity) {
-                organization.legalEntity = body.legalEntity
-                // Also update main name if legal name changes
-                if (body.legalEntity.legalName) {
-                    organization.name = body.legalEntity.legalName
+            // Update simplified fields
+            if (body.name) {
+                organization.name = body.name
+                // Also update legalEntity.legalName for backward compatibility
+                if (!organization.legalEntity) {
+                    organization.legalEntity = { legalName: body.name }
+                } else {
+                    organization.legalEntity.legalName = body.name
                 }
             }
-            if (body.corporateStructure) organization.corporateStructure = body.corporateStructure
-            if (body.contactPoints) organization.contactPoints = body.contactPoints
-            if (body.compliance) organization.compliance = body.compliance
-            if (body.operational) organization.operational = body.operational
-            if (body.safDemand) organization.safDemand = body.safDemand
-            if (body.procurement) organization.procurement = body.procurement
-            if (body.financial) organization.financial = body.financial
-            if (body.sustainability) organization.sustainability = body.sustainability
-            if (body.governance) organization.governance = body.governance
-            if (body.integrations) organization.integrations = body.integrations
+
+            if (body.userName !== undefined) {
+                organization.userName = body.userName
+            }
+
+            if (body.companyEmail !== undefined) {
+                organization.companyEmail = body.companyEmail
+            }
+
+            if (body.teamSize !== undefined) {
+                organization.teamSize = body.teamSize
+            }
+
+            if (body.headquarters !== undefined) {
+                organization.headquarters = body.headquarters
+            }
+
+            if (body.entityType !== undefined) {
+                organization.entityType = body.entityType
+            }
+
+            if (body.organizationType) {
+                organization.organizationType = body.organizationType
+                // Update type field as well
+                organization.type = body.organizationType
+            }
+
+            if (body.intent !== undefined) {
+                organization.intent = body.intent
+            }
+
+            if (body.volumeRange !== undefined) {
+                organization.volumeRange = body.volumeRange
+            }
+
+            if (body.requirements !== undefined) {
+                organization.requirements = body.requirements
+            }
+
+            if (body.targetAirports !== undefined) {
+                organization.targetAirports = body.targetAirports
+            }
+
+            if (body.emailPreferences !== undefined) {
+                organization.emailPreferences = body.emailPreferences
+            }
 
             // Update status to in_progress if it was pending
             if (organization.onboardingStatus === 'pending') {
@@ -103,14 +175,6 @@ export async function PUT(req: NextRequest) {
             }
 
             await organization.save()
-            
-            // If userRole is provided, update the user's membership role
-            if (body.userRole) {
-                 await Membership.findOneAndUpdate(
-                    { orgId: organization._id, userId },
-                    { role: body.userRole }
-                )
-            }
         }
 
         return NextResponse.json(organization)
@@ -119,3 +183,4 @@ export async function PUT(req: NextRequest) {
         return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 })
     }
 }
+

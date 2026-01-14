@@ -11,15 +11,16 @@
   },
   "dependencies": {
     "@clerk/nextjs": "^5.0.0",
+    "@types/topojson-specification": "^1.0.5",
     "date-fns": "^4.1.0",
-    "db": "^6.0.3",
     "formidable": "^3.5.4",
     "lucide-react": "^0.400.0",
-    "mongo": "^0.1.0",
-    "next": "^14.2.0",
+    "mongoose": "^8.0.0",
+    "next": "^14.2.35",
     "pdf-parse": "^2.4.5",
     "react": "^18.3.0",
     "react-dom": "^18.3.0",
+    "react-simple-maps": "^3.0.0",
     "tesseract.js": "^6.0.1"
   },
   "devDependencies": {

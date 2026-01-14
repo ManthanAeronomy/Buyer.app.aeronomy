@@ -32,7 +32,7 @@ export interface ILotCompliance {
 export interface ILot extends Document {
   // Organization/User info
   orgId: Types.ObjectId // Organization posting the lot (airline/supplier)
-  postedBy: string // Clerk userId who posted the lot
+  postedBy: Types.ObjectId // MongoDB User who posted the lot (reference to User)
   airlineName?: string // Display name for the airline
   
   // Lot details
@@ -111,7 +111,7 @@ const LotComplianceSchema = new Schema<ILotCompliance>(
 const LotSchema: Schema<ILot> = new Schema(
   {
     orgId: { type: Schema.Types.ObjectId, ref: 'Organization', required: true, index: true },
-    postedBy: { type: String, required: true, index: true }, // Clerk userId
+    postedBy: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true }, // MongoDB User reference
     airlineName: { type: String, trim: true },
     
     title: { type: String, required: true, trim: true },
