@@ -83,7 +83,7 @@ export async function PUT(req: NextRequest) {
                 // Store simplified data in legalEntity for backward compatibility
                 legalEntity: {
                     legalName: body.name,
-                },
+                } as any,
                 // Store additional fields
                 userName: body.userName,
                 companyEmail: body.companyEmail,
@@ -117,7 +117,7 @@ export async function PUT(req: NextRequest) {
                 organization.name = body.name
                 // Also update legalEntity.legalName for backward compatibility
                 if (!organization.legalEntity) {
-                    organization.legalEntity = { legalName: body.name }
+                    organization.legalEntity = { legalName: body.name } as any
                 } else {
                     organization.legalEntity.legalName = body.name
                 }
