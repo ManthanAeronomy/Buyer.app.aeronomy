@@ -431,7 +431,7 @@ export default function OnboardingWizard() {
                                     Major Airports for SAF Requirements
                                 </label>
                                 <p className="text-xs text-slate-500 mb-2">
-                                    Select the airports where you'll need SAF supply
+                                    Select the airports where you&apos;ll need SAF supply
                                 </p>
 
                                 {/* Selected airports display */}

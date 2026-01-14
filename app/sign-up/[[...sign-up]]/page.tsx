@@ -82,7 +82,7 @@ export default function SignUpPage() {
 
   const handleVerifyEmail = async (code?: string) => {
     const codeToUse = code || verificationCode
-    
+
     if (!isLoaded || !codeToUse || codeToUse.length !== 6) {
       logVerify('blocked: verification attempted without loaded clerk or invalid code', {
         isLoaded,
@@ -99,7 +99,7 @@ export default function SignUpPage() {
 
     try {
       logVerify('attemptEmailAddressVerification start', { verificationCode: codeToUse })
-      
+
       const result = await signUp.attemptEmailAddressVerification({
         code: codeToUse,
       })
@@ -210,7 +210,7 @@ export default function SignUpPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!isLoaded) return
 
     setIsLoading(true)
@@ -303,7 +303,7 @@ export default function SignUpPage() {
           unverifiedFields,
           response: result,
         })
-        
+
         // If email verification is needed, prepare it
         if (unverifiedFields.includes('email_address')) {
           log('preparing email verification via email_code')
@@ -624,7 +624,7 @@ export default function SignUpPage() {
       <div className="hidden lg:flex flex-1 relative overflow-hidden bg-gradient-to-br from-slate-800 to-slate-900 min-h-screen">
         {/* Fallback background gradient */}
         <div className="absolute inset-0 bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900"></div>
-        
+
         {/* Video Background */}
         <video
           ref={videoRef}
@@ -682,10 +682,10 @@ export default function SignUpPage() {
           <source src="/videos/clouds.mp4" type="video/mp4" />
           Your browser does not support the video tag.
         </video>
-        
+
         {/* Dark Overlay */}
         <div className="absolute inset-0 bg-slate-900/40 z-[1]"></div>
-        
+
         {/* Text Overlay */}
         <div className="relative z-[2] flex items-start justify-center w-full h-full px-12 pt-20">
           <div className="text-center">
@@ -696,7 +696,7 @@ export default function SignUpPage() {
               SAF needs.
             </p>
             <p className="text-4xl lg:text-5xl xl:text-6xl font-light text-white leading-tight mt-8">
-              That's <span className="font-semibold text-white">Aero</span><span className="font-semibold text-lightblue-400">nomy</span>
+              That&apos;s <span className="font-semibold text-white">Aero</span><span className="font-semibold text-lightblue-400">nomy</span>
             </p>
           </div>
         </div>
@@ -708,14 +708,12 @@ export default function SignUpPage() {
 function ValidationItem({ met, text }: { met: boolean; text: string }) {
   return (
     <div className="flex items-center gap-2.5">
-      <div className={`flex items-center justify-center w-4 h-4 rounded-full transition-all ${
-        met ? 'bg-primary-500' : 'bg-slate-200'
-      }`}>
+      <div className={`flex items-center justify-center w-4 h-4 rounded-full transition-all ${met ? 'bg-primary-500' : 'bg-slate-200'
+        }`}>
         {met && <Check size={12} className="text-white" strokeWidth={3} />}
       </div>
-      <span className={`text-xs transition-colors ${
-        met ? 'text-slate-700 font-medium' : 'text-slate-500'
-      }`}>
+      <span className={`text-xs transition-colors ${met ? 'text-slate-700 font-medium' : 'text-slate-500'
+        }`}>
         {text}
       </span>
     </div>

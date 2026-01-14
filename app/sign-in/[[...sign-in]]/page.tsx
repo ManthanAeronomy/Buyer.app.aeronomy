@@ -66,7 +66,7 @@ export default function SignInPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!isLoaded) return
 
     setIsLoading(true)
@@ -83,7 +83,7 @@ export default function SignInPage() {
       if (result.status === 'complete') {
         await setActive({ session: result.createdSessionId })
         console.log('✅ Sign in successful! Redirecting to dashboard...')
-        
+
         // Redirect directly to dashboard (skip OTP for now)
         router.push('/dashboard')
       } else {
@@ -97,9 +97,9 @@ export default function SignInPage() {
       }
       console.error('Sign in error:', err)
       console.log('Error details:', err.errors)
-      
+
       const errorMessage = err.errors?.[0]?.message || 'Invalid email/username or password'
-      
+
       // Check if account doesn't exist
       if (errorMessage.includes('account') || errorMessage.includes('Couldn\'t find')) {
         setError('No account found with these credentials. Please sign up first.')
@@ -122,7 +122,7 @@ export default function SignInPage() {
               Welcome Back
             </h1>
             <p className="text-slate-500 text-sm">
-              Don't have an account?{' '}
+              Don&apos;t have an account?{' '}
               <Link href="/sign-up" className="text-primary-600 hover:text-primary-700 font-medium transition-colors">
                 Sign up
               </Link>
@@ -197,7 +197,7 @@ export default function SignInPage() {
 
             {/* Bottom Link */}
             <p className="text-center text-sm text-slate-500 pt-4">
-              Don't have an account?{' '}
+              Don&apos;t have an account?{' '}
               <Link href="/sign-up" className="text-primary-600 hover:text-primary-700 font-semibold">
                 Sign up
               </Link>
@@ -210,7 +210,7 @@ export default function SignInPage() {
       <div className="hidden lg:flex flex-1 relative overflow-hidden bg-gradient-to-br from-slate-800 to-slate-900 min-h-screen">
         {/* Fallback background gradient */}
         <div className="absolute inset-0 bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900"></div>
-        
+
         {/* Video Background */}
         <video
           ref={videoRef}
@@ -268,10 +268,10 @@ export default function SignInPage() {
           <source src="/videos/clouds.mp4" type="video/mp4" />
           Your browser does not support the video tag.
         </video>
-        
+
         {/* Dark Overlay */}
         <div className="absolute inset-0 bg-slate-900/40 z-[1]"></div>
-        
+
         {/* Text Overlay */}
         <div className="relative z-[2] flex items-start justify-center w-full h-full px-12 pt-20">
           <div className="text-center">
@@ -282,7 +282,7 @@ export default function SignInPage() {
               SAF needs.
             </p>
             <p className="text-4xl lg:text-5xl xl:text-6xl font-light text-white leading-tight mt-8">
-              That's <span className="font-semibold text-white">Aero</span><span className="font-semibold text-lightblue-400">nomy</span>
+              That&apos;s <span className="font-semibold text-white">Aero</span><span className="font-semibold text-lightblue-400">nomy</span>
             </p>
           </div>
         </div>

@@ -15,7 +15,7 @@ export default function OTPEmail({ otpCode, userName, expirationMinutes }: OTPEm
       </h2>
 
       <p style={{ margin: '0 0 24px', fontSize: '16px', lineHeight: '1.6', color: '#475569' }}>
-        You're one step away from accessing your Aeronomy account. Use the verification code below to complete your authentication:
+        You&apos;re one step away from accessing your Aeronomy account. Use the verification code below to complete your authentication:
       </p>
 
       {/* OTP Code Box */}
@@ -77,7 +77,7 @@ export default function OTPEmail({ otpCode, userName, expirationMinutes }: OTPEm
 
       {/* Instructions */}
       <p style={{ margin: '24px 0 0', fontSize: '14px', lineHeight: '1.6', color: '#64748b' }}>
-        If you didn't request this verification code, please ignore this email or contact our support team if you have concerns.
+        If you didn&apos;t request this verification code, please ignore this email or contact our support team if you have concerns.
       </p>
     </div>
   )

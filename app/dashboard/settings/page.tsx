@@ -159,8 +159,8 @@ export default function SettingsPage() {
                                     key={tab.id}
                                     onClick={() => setActiveTab(tab.id as any)}
                                     className={`w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${activeTab === tab.id
-                                            ? 'bg-blue-50 text-blue-700'
-                                            : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                                        ? 'bg-blue-50 text-blue-700'
+                                        : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                                         }`}
                                 >
                                     <tab.icon className="h-4 w-4" />
@@ -279,7 +279,7 @@ export default function SettingsPage() {
                             {activeTab === 'notifications' && (
                                 <div className="p-6">
                                     <h2 className="text-lg font-semibold text-slate-900 mb-2">Email Notifications</h2>
-                                    <p className="text-sm text-slate-500 mb-6">Choose which emails you'd like to receive</p>
+                                    <p className="text-sm text-slate-500 mb-6">Choose which emails you&apos;d like to receive</p>
 
                                     <div className="space-y-4">
                                         {[
@@ -321,14 +321,14 @@ export default function SettingsPage() {
                                                         }
                                                     })}
                                                     className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${orgData.emailPreferences[pref.key as keyof EmailPreferences]
-                                                            ? 'bg-blue-600'
-                                                            : 'bg-slate-200'
+                                                        ? 'bg-blue-600'
+                                                        : 'bg-slate-200'
                                                         }`}
                                                 >
                                                     <span
                                                         className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${orgData.emailPreferences[pref.key as keyof EmailPreferences]
-                                                                ? 'translate-x-5'
-                                                                : 'translate-x-0'
+                                                            ? 'translate-x-5'
+                                                            : 'translate-x-0'
                                                             }`}
                                                     />
                                                 </button>

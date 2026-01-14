@@ -31,7 +31,7 @@ export default function VerifyOTPPage() {
       if (playPromise !== undefined) {
         playPromise.catch(() => {
           setTimeout(() => {
-            video.play().catch(() => {})
+            video.play().catch(() => { })
           }, 500)
         })
       }
@@ -170,7 +170,7 @@ export default function VerifyOTPPage() {
               Verify Your Email
             </h1>
             <p className="text-slate-500 text-sm">
-              We've sent a 6-digit verification code to
+              We&apos;ve sent a 6-digit verification code to
             </p>
             <p className="text-slate-700 font-medium mt-1 flex items-center gap-2">
               <Mail className="h-4 w-4" />
@@ -198,7 +198,7 @@ export default function VerifyOTPPage() {
             {/* Resend Section */}
             <div className="text-center space-y-3">
               <p className="text-sm text-slate-500">
-                Didn't receive the code?
+                Didn&apos;t receive the code?
               </p>
               <button
                 onClick={handleResend}
@@ -234,7 +234,7 @@ export default function VerifyOTPPage() {
       {/* Right Side - Video */}
       <div className="hidden lg:flex flex-1 relative overflow-hidden bg-gradient-to-br from-slate-800 to-slate-900 min-h-screen">
         <div className="absolute inset-0 bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900"></div>
-        
+
         <video
           ref={videoRef}
           autoPlay
@@ -247,9 +247,9 @@ export default function VerifyOTPPage() {
         >
           <source src="/videos/clouds.mp4" type="video/mp4" />
         </video>
-        
+
         <div className="absolute inset-0 bg-slate-900/40 z-[1]"></div>
-        
+
         <div className="relative z-[2] flex items-start justify-center w-full h-full px-12 pt-20">
           <div className="text-center">
             <p className="text-4xl lg:text-5xl xl:text-6xl font-light text-white leading-tight">

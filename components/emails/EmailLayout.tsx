@@ -62,7 +62,7 @@ export default function EmailLayout({ children }: EmailLayoutProps) {
                       This email was sent by Aeronomy
                     </p>
                     <p style={{ margin: 0, fontSize: '12px', color: '#94a3b8' }}>
-                      If you didn't request this code, please ignore this email.
+                      If you didn&apos;t request this code, please ignore this email.
                     </p>
                   </td>
                 </tr>
