@@ -80,7 +80,7 @@ export default function LotList({ initialLots = [], showCreateButton = true, sho
     }
   }
 
-  const handleFormClose = () => {
+  const handleFormClose = (_savedLot?: { _id: string; status?: string }) => {
     setShowForm(false)
     setEditingLot(null)
     fetchLots()

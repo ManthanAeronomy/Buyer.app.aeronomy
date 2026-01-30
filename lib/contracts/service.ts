@@ -79,6 +79,63 @@ export async function createContractFromBid(
 }
 
 /**
+ * Create a contract from a bid when the producer accepts the buyer's counter-offer.
+ * Uses bid.counterOffer for volume and pricing.
+ */
+export async function createContractFromCounterOffer(bidId: string): Promise<IContract> {
+  await connectDB()
+
+  const bid = await Bid.findById(bidId).populate('lotId')
+  if (!bid) throw new Error('Bid not found')
+
+  const co = (bid as any).counterOffer
+  if (!co || !co.volume?.amount || co.price == null) {
+    throw new Error('Bid has no valid counter-offer to accept')
+  }
+
+  if (bid.status !== 'pending') {
+    throw new Error('Bid is not pending; counter-offer may already have been accepted or rejected')
+  }
+
+  const lot = bid.lotId as any
+  const sellerOrgId = lot.orgId
+  const currency = (bid as any).pricing?.currency || 'USD'
+
+  const contract = await Contract.create({
+    lotId: lot._id,
+    bidId: bid._id,
+    sellerOrgId,
+    buyerName: (bid as any).bidderName,
+    buyerEmail: (bid as any).bidderEmail,
+    contractNumber: '',
+    title: `${lot.title} - Contract (Counter-offer accepted)`,
+    description: (bid as any).message || lot.description,
+    volume: { amount: co.volume.amount, unit: co.volume.unit || 'gallons' },
+    pricing: {
+      price: co.price,
+      currency,
+      pricePerUnit: co.volume.amount > 0 ? co.price / co.volume.amount : undefined,
+    },
+    delivery: (bid as any).deliveryDate || (bid as any).deliveryLocation
+      ? {
+          deliveryDate: (bid as any).deliveryDate ? new Date((bid as any).deliveryDate) : undefined,
+          deliveryLocation: (bid as any).deliveryLocation,
+        }
+      : lot.delivery,
+    compliance: lot.compliance,
+    status: 'pending_signature',
+    terms: co.message,
+  })
+
+  await Lot.findByIdAndUpdate(lot._id, { status: 'sold' })
+  ;(bid as any).status = 'accepted'
+  ;(bid as any).respondedAt = new Date()
+  await bid.save()
+
+  return contract
+}
+
+/**
  * Get contracts for user's organization
  */
 export async function getUserContracts(userId: string, filters?: { status?: ContractStatus }) {

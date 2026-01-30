@@ -17,30 +17,38 @@ export interface IBidPricing {
 export interface IBid extends Document {
   // Lot reference
   lotId: Types.ObjectId // Reference to the Lot
-  
+
   // Bidder information
-  bidderId: Types.ObjectId // MongoDB User who placed the bid (reference to User)
+  bidderId?: Types.ObjectId // MongoDB User who placed the bid (optional for external bids)
+  externalBidderId?: string // Original Clerk userId from Producer Dashboard (for external bids)
   bidderName?: string // Bidder organization/company name (for display/backward compatibility)
   bidderEmail?: string // Bidder contact email (for display/backward compatibility)
-  
+
   // Bid details
   volume: IBidVolume // Volume being bid for
   pricing: IBidPricing // Bid price
   status: BidStatus
-  
+
   // Additional information
   message?: string // Optional message from bidder
   deliveryDate?: Date // Proposed delivery date
   deliveryLocation?: string
-  
+
   // Metadata
   source?: string // Source system (e.g., 'port-3004', 'api')
   externalBidId?: string // External bid ID if coming from another system
-  
+
+  // Counter-offer from seller (buyer/lot owner). When set, producer can accept.
+  counterOffer?: {
+    price: number
+    volume: { amount: number; unit: string }
+    message?: string
+  }
+
   // Dates
   expiresAt?: Date
   respondedAt?: Date
-  
+
   createdAt: Date
   updatedAt: Date
 }
@@ -66,7 +74,8 @@ const BidPricingSchema = new Schema<IBidPricing>(
 const BidSchema: Schema<IBid> = new Schema(
   {
     lotId: { type: Schema.Types.ObjectId, ref: 'Lot', required: true, index: true },
-    bidderId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true }, // MongoDB User reference
+    bidderId: { type: Schema.Types.ObjectId, ref: 'User', index: true }, // Optional for external bids
+    externalBidderId: { type: String, trim: true }, // Original Clerk userId from Producer Dashboard
     bidderName: { type: String, trim: true }, // For display/backward compatibility
     bidderEmail: { type: String, trim: true, lowercase: true }, // For display/backward compatibility
     volume: { type: BidVolumeSchema, required: true },
@@ -83,6 +92,11 @@ const BidSchema: Schema<IBid> = new Schema(
     deliveryLocation: { type: String, trim: true },
     source: { type: String, trim: true, default: 'port-3004' },
     externalBidId: { type: String, trim: true, index: true },
+    counterOffer: {
+      price: { type: Number },
+      volume: { amount: { type: Number }, unit: { type: String } },
+      message: { type: String },
+    },
     expiresAt: { type: Date, index: true },
     respondedAt: { type: Date },
   },

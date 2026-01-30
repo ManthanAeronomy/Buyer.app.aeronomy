@@ -9,7 +9,8 @@ const isPublicRoute = createRouteMatcher([
   '/api/health(.*)', // Health check endpoints
   '/api/lots/external(.*)', // External API for Producer Dashboard
   '/api/lots(.*)', // Public lots API (GET only, POST requires auth)
-  '/api/bids(.*)', // Bids API (POST from external, GET requires auth)
+  '/api/bids(.*)', // Bids API (POST from external, GET requires auth, accept-counter)
+  '/api/contracts/external(.*)', // External contract fetch for Producer
   '/verify-otp(.*)', // Allow OTP verification page
 ])
 

@@ -37,21 +37,18 @@ export default function DashboardHeader({ activeTab }: DashboardHeaderProps) {
   // Poll for notifications
   useEffect(() => {
     fetchNotifications()
-    const interval = setInterval(fetchNotifications, 30000) // Poll every 30s
+    const interval = setInterval(fetchNotifications, 30000)
     return () => clearInterval(interval)
   }, [])
 
   const fetchNotifications = async () => {
     try {
-      // In a real app, this would fetch from an API
-      // For now, we'll simulate checking for new bids/producers
       const bidsRes = await fetch('/api/bids?status=pending')
       const bidsData = await bidsRes.json()
 
       const producersRes = await fetch('/api/organizations/producers')
       const producersData = await producersRes.json()
 
-      // Mock notifications based on data
       const newNotifications = []
 
       if (bidsData.count > 0) {
@@ -65,7 +62,7 @@ export default function DashboardHeader({ activeTab }: DashboardHeaderProps) {
         })
       }
 
-      if (producersData.count > 5) { // Just an example condition
+      if (producersData.count > 5) {
         newNotifications.push({
           id: 'prod-1',
           type: 'producer',
@@ -87,7 +84,6 @@ export default function DashboardHeader({ activeTab }: DashboardHeaderProps) {
     e.preventDefault()
     if (!searchQuery.trim()) return
 
-    // Simple routing based on search intent keywords
     const term = searchQuery.toLowerCase()
     if (term.includes('bid') || term.includes('offer')) {
       router.push('/dashboard?tab=bids')
@@ -98,7 +94,6 @@ export default function DashboardHeader({ activeTab }: DashboardHeaderProps) {
     } else if (term.includes('lot') || term.includes('fuel') || term.includes('saf')) {
       router.push('/dashboard?tab=marketplace')
     } else {
-      // Default fallback to marketplace search
       router.push(`/dashboard?tab=marketplace&search=${encodeURIComponent(searchQuery)}`)
     }
   }
@@ -117,27 +112,30 @@ export default function DashboardHeader({ activeTab }: DashboardHeaderProps) {
   }
 
   return (
-    <header className="flex h-16 items-center justify-between border-b border-slate-200 bg-white px-6 shadow-sm z-20 relative">
+    <header className="flex h-16 items-center justify-between border-b border-blue-100 bg-white px-6">
       <div className="flex items-center gap-8 flex-1">
-        <h1 className="text-xl font-semibold text-slate-800 min-w-[200px]">
+        <h1 className="text-xl font-semibold text-slate-800 min-w-[180px]">
           {getPageTitle()}
         </h1>
 
-        {/* Global Search - CRM Style */}
-        <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-xl relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search lots, contracts, companies..."
-            className="h-10 w-full rounded-lg border border-slate-200 bg-slate-50 pl-10 pr-4 text-sm focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all"
-          />
+        {/* Global Search */}
+        <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-md">
+          <div className="relative w-full">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search lots, contracts, companies..."
+              className="h-10 w-full rounded-lg border border-slate-200 bg-slate-50 pl-10 pr-4 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 transition-all"
+            />
+          </div>
         </form>
       </div>
 
-      <div className="flex items-center gap-2">
-        <button className="rounded-full p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-colors">
+      <div className="flex items-center gap-1">
+        {/* Help */}
+        <button className="flex h-10 w-10 items-center justify-center rounded-lg text-slate-500 hover:bg-blue-50 hover:text-blue-600 transition-colors">
           <HelpCircle className="h-5 w-5" />
         </button>
 
@@ -145,65 +143,68 @@ export default function DashboardHeader({ activeTab }: DashboardHeaderProps) {
         <div className="relative" ref={notificationRef}>
           <button
             onClick={() => setShowNotifications(!showNotifications)}
-            className="rounded-full p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-colors relative"
+            className="flex h-10 w-10 items-center justify-center rounded-lg text-slate-500 hover:bg-blue-50 hover:text-blue-600 transition-colors relative"
           >
             <Bell className="h-5 w-5" />
             {unreadCount > 0 && (
-              <span className="absolute top-2 right-2 h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white animate-pulse" />
+              <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" />
             )}
           </button>
 
           {showNotifications && (
-            <div className="absolute right-0 top-12 w-80 rounded-xl border border-slate-200 bg-white shadow-lg ring-1 ring-black ring-opacity-5 py-2 z-50">
-              <div className="px-4 py-2 border-b border-slate-100 flex justify-between items-center">
-                <h3 className="font-semibold text-slate-900">Notifications</h3>
+            <div className="absolute right-0 top-12 w-80 rounded-xl border border-slate-200 bg-white shadow-lg py-2 z-50">
+              <div className="px-4 py-3 border-b border-slate-100 flex justify-between items-center">
+                <h3 className="font-semibold text-slate-800">Notifications</h3>
                 {unreadCount > 0 && (
-                  <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">{unreadCount} New</span>
+                  <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">{unreadCount} New</span>
                 )}
               </div>
-              <div className="max-h-96 overflow-y-auto">
+              <div className="max-h-80 overflow-y-auto">
                 {notifications.length > 0 ? (
                   notifications.map((notif) => (
-                    <div key={notif.id} className="px-4 py-3 hover:bg-slate-50 border-b border-slate-50 last:border-0 cursor-pointer">
+                    <div key={notif.id} className="px-4 py-3 hover:bg-blue-50 border-b border-slate-50 last:border-0 cursor-pointer transition-colors">
                       <div className="flex justify-between items-start mb-1">
-                        <p className="text-sm font-medium text-slate-900">{notif.title}</p>
+                        <p className="text-sm font-medium text-slate-800">{notif.title}</p>
                         <span className="text-xs text-slate-400">{notif.time}</span>
                       </div>
                       <p className="text-xs text-slate-500">{notif.message}</p>
                     </div>
                   ))
                 ) : (
-                  <div className="px-4 py-8 text-center text-slate-500 text-sm">
+                  <div className="px-4 py-8 text-center text-slate-400 text-sm">
                     No new notifications
                   </div>
                 )}
               </div>
-              <div className="px-4 py-2 border-t border-slate-100 text-center">
-                <button className="text-xs font-medium text-blue-600 hover:text-blue-700">Mark all as read</button>
-              </div>
+              {notifications.length > 0 && (
+                <div className="px-4 py-2 border-t border-slate-100 text-center">
+                  <button className="text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors">Mark all as read</button>
+                </div>
+              )}
             </div>
           )}
         </div>
 
+        {/* Settings */}
         <button
           onClick={() => router.push('/dashboard/settings')}
-          className="rounded-full p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-colors"
+          className="flex h-10 w-10 items-center justify-center rounded-lg text-slate-500 hover:bg-blue-50 hover:text-blue-600 transition-colors"
         >
           <Settings className="h-5 w-5" />
         </button>
 
-        <div className="h-6 w-px bg-slate-200 mx-2" />
+        <div className="h-8 w-px bg-slate-200 mx-2" />
 
         {/* Profile Dropdown */}
         <div className="relative" ref={profileMenuRef}>
           <button
             onClick={() => setShowProfileMenu(!showProfileMenu)}
-            className="flex items-center gap-2 pl-1 rounded-full hover:bg-slate-50 pr-2 py-1 transition-colors"
+            className="flex items-center gap-2 rounded-lg hover:bg-blue-50 px-2 py-1.5 transition-colors"
           >
             {user?.imageUrl ? (
-              <img src={user.imageUrl} alt="Profile" className="h-8 w-8 rounded-full border border-slate-200" />
+              <img src={user.imageUrl} alt="Profile" className="h-8 w-8 rounded-full border-2 border-blue-100" />
             ) : (
-              <div className="h-8 w-8 rounded-full bg-blue-100 border border-blue-200 flex items-center justify-center text-blue-700 font-bold text-xs">
+              <div className="h-8 w-8 rounded-full bg-blue-100 border-2 border-blue-200 flex items-center justify-center text-blue-700 font-semibold text-sm">
                 {user?.firstName?.[0] || 'U'}
               </div>
             )}
@@ -211,23 +212,29 @@ export default function DashboardHeader({ activeTab }: DashboardHeaderProps) {
           </button>
 
           {showProfileMenu && (
-            <div className="absolute right-0 top-12 w-56 rounded-xl border border-slate-200 bg-white shadow-lg ring-1 ring-black ring-opacity-5 py-1 z-50">
+            <div className="absolute right-0 top-12 w-56 rounded-xl border border-slate-200 bg-white shadow-lg py-1 z-50">
               <div className="px-4 py-3 border-b border-slate-100">
-                <p className="text-sm font-medium text-slate-900 truncate">{user?.fullName || 'User'}</p>
+                <p className="text-sm font-medium text-slate-800 truncate">{user?.fullName || 'User'}</p>
                 <p className="text-xs text-slate-500 truncate">{user?.primaryEmailAddress?.emailAddress}</p>
               </div>
 
               <div className="py-1">
                 <button
-                  onClick={() => router.push('/dashboard?tab=organization')}
-                  className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                  onClick={() => {
+                    router.push('/dashboard?tab=organization')
+                    setShowProfileMenu(false)
+                  }}
+                  className="w-full text-left px-4 py-2 text-sm text-slate-600 hover:bg-blue-50 hover:text-blue-700 flex items-center gap-3 transition-colors"
                 >
                   <User className="h-4 w-4" />
                   User Profile
                 </button>
                 <button
-                  onClick={() => router.push('/dashboard/settings')}
-                  className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                  onClick={() => {
+                    router.push('/dashboard/settings')
+                    setShowProfileMenu(false)
+                  }}
+                  className="w-full text-left px-4 py-2 text-sm text-slate-600 hover:bg-blue-50 hover:text-blue-700 flex items-center gap-3 transition-colors"
                 >
                   <Settings className="h-4 w-4" />
                   Settings
@@ -236,7 +243,7 @@ export default function DashboardHeader({ activeTab }: DashboardHeaderProps) {
 
               <div className="border-t border-slate-100 py-1">
                 <SignOutButton redirectUrl="/sign-in">
-                  <button className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2">
+                  <button className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-3 transition-colors">
                     <LogOut className="h-4 w-4" />
                     Sign out
                   </button>
@@ -249,7 +256,3 @@ export default function DashboardHeader({ activeTab }: DashboardHeaderProps) {
     </header>
   )
 }
-
-
-
-

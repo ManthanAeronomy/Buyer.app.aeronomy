@@ -7,7 +7,7 @@ import { Lot } from './LotCard'
 interface LotFormProps {
   lot?: Lot
   onClose: () => void
-  onSuccess: () => void
+  onSuccess: (savedLot?: { _id: string; status?: string }) => void
 }
 
 export default function LotForm({ lot, onClose, onSuccess }: LotFormProps) {
@@ -99,7 +99,8 @@ export default function LotForm({ lot, onClose, onSuccess }: LotFormProps) {
         throw new Error(error.error || 'Failed to save lot')
       }
 
-      onSuccess()
+      const data = await response.json()
+      onSuccess(data.lot)
     } catch (error: any) {
       console.error('Error saving lot:', error)
       alert(error.message || 'Failed to save lot')

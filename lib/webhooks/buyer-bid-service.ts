@@ -9,7 +9,10 @@ const BUYER_DASHBOARD_URL = process.env.BUYER_DASHBOARD_URL || 'http://localhost
 const BUYER_DASHBOARD_API_KEY = process.env.PRODUCER_API_KEY || 'producer-api-key-456'
 
 export interface BidSubmissionData {
+  /** Buyer lot _id (required). */
   lotId: string
+  /** Clerk userId of the Producer user placing the bid (required, shared Clerk). */
+  bidderId: string
   producerName: string
   producerEmail: string
   volume: number
@@ -21,7 +24,7 @@ export interface BidSubmissionData {
   paymentTerms?: string
   deliveryDate?: string // ISO date string
   deliveryLocation?: string
-  externalBidId?: string // Unique ID to prevent duplicates
+  externalBidId?: string // Unique ID to prevent duplicates (e.g. ProducerBid._id)
   status?: string // 'pending', 'accepted', 'rejected', 'withdrawn'
 }
 
@@ -36,24 +39,26 @@ export async function sendBidToBuyerDashboard(bidData: BidSubmissionData): Promi
 
   const payload = {
     lotId: bidData.lotId,
-    producerName: bidData.producerName,
-    producerEmail: bidData.producerEmail,
-    volume: bidData.volume,
-    volumeUnit: bidData.volumeUnit || 'MT',
-    pricePerUnit: bidData.pricePerUnit,
-    currency: bidData.currency || 'USD',
-    totalPrice: totalPrice,
-    notes: bidData.notes,
-    paymentTerms: bidData.paymentTerms,
+    bidderId: bidData.bidderId,
+    bidderName: bidData.producerName,
+    bidderEmail: bidData.producerEmail,
+    volume: { amount: bidData.volume, unit: bidData.volumeUnit || 'MT' },
+    pricing: {
+      price: totalPrice,
+      currency: bidData.currency || 'USD',
+      pricePerUnit: bidData.pricePerUnit,
+      paymentTerms: bidData.paymentTerms || undefined,
+    },
+    message: bidData.notes,
     deliveryDate: bidData.deliveryDate,
     deliveryLocation: bidData.deliveryLocation,
     externalBidId: bidData.externalBidId || `bid_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-    status: bidData.status || 'pending',
   }
 
   try {
     console.log(`📤 Sending bid to Buyer Dashboard (${BUYER_DASHBOARD_URL})...`, {
       lotId: bidData.lotId,
+      bidderId: bidData.bidderId,
       producerName: bidData.producerName,
       pricePerUnit: bidData.pricePerUnit,
     })

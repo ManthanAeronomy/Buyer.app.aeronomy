@@ -1,12 +1,13 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { Plus, ArrowRight, TrendingUp, Handshake, Gavel } from 'lucide-react'
-import Link from 'next/link'
 import LotCard, { Lot } from './LotCard'
 import BidCard from '../bids/BidCard'
 import ContractCard from '../contracts/ContractCard'
 import LotForm from './LotForm'
+import LotDetail from './LotDetail'
 import { Bid } from '../bids/BidList'
 import { Contract } from '../contracts/ContractList'
 
@@ -15,11 +16,15 @@ interface MarketplaceOverviewProps {
 }
 
 export default function MarketplaceOverview({ organizationType }: MarketplaceOverviewProps) {
+  const router = useRouter()
   const [lots, setLots] = useState<Lot[]>([])
   const [bids, setBids] = useState<Bid[]>([])
   const [contracts, setContracts] = useState<Contract[]>([])
   const [loading, setLoading] = useState(true)
   const [showLotForm, setShowLotForm] = useState(false)
+  const [showPublishedBanner, setShowPublishedBanner] = useState(false)
+  const [selectedLot, setSelectedLot] = useState<Lot | null>(null)
+  const [editingLot, setEditingLot] = useState<Lot | null>(null)
 
   const isBuyer = organizationType === 'airline'
 
@@ -59,9 +64,29 @@ export default function MarketplaceOverview({ organizationType }: MarketplaceOve
     }
   }
 
-  const handleLotCreateSuccess = () => {
+  const handleLotCreateSuccess = (savedLot?: { _id: string; status?: string }) => {
     setShowLotForm(false)
+    setEditingLot(null)
     fetchAllData()
+    if (savedLot?.status === 'published') {
+      setShowPublishedBanner(true)
+    }
+  }
+
+  const handleLotDelete = async (lotId: string) => {
+    try {
+      const res = await fetch(`/api/lots/${lotId}`, { method: 'DELETE' })
+      if (res.ok) {
+        setSelectedLot(null)
+        fetchAllData()
+      } else {
+        const data = await res.json()
+        alert(data?.error || 'Failed to delete lot')
+      }
+    } catch (e) {
+      console.error('Delete lot error:', e)
+      alert('Failed to delete lot')
+    }
   }
 
   // Calculate stats
@@ -71,6 +96,20 @@ export default function MarketplaceOverview({ organizationType }: MarketplaceOve
 
   return (
     <div className="space-y-8">
+      {showPublishedBanner && (
+        <div className="flex items-center justify-between gap-4 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-green-800">
+          <p className="text-sm font-medium">
+            Your lot is now visible to producers on the platform.
+          </p>
+          <button
+            onClick={() => setShowPublishedBanner(false)}
+            className="shrink-0 rounded-lg px-3 py-1.5 text-sm font-medium text-green-700 hover:bg-green-100"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
       {/* Header & Quick Actions */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -81,7 +120,10 @@ export default function MarketplaceOverview({ organizationType }: MarketplaceOve
         </div>
         <div>
           <button
-            onClick={() => setShowLotForm(true)}
+            onClick={() => {
+              setEditingLot(null)
+              setShowLotForm(true)
+            }}
             className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 shadow-sm transition-colors"
           >
             <Plus className="h-4 w-4" />
@@ -135,7 +177,10 @@ export default function MarketplaceOverview({ organizationType }: MarketplaceOve
           <section>
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-semibold text-slate-900">Recent Listings</h2>
-              <button className="text-sm font-medium text-blue-600 hover:text-blue-700 flex items-center gap-1">
+              <button
+                onClick={() => router.push('/dashboard?tab=my-lots')}
+                className="text-sm font-medium text-blue-600 hover:text-blue-700 flex items-center gap-1"
+              >
                 View All <ArrowRight className="h-4 w-4" />
               </button>
             </div>
@@ -146,8 +191,12 @@ export default function MarketplaceOverview({ organizationType }: MarketplaceOve
             ) : (
               <div className="space-y-4">
                 {lots.slice(0, 3).map(lot => (
-                  <div key={lot._id} className="transform scale-95 origin-top-left w-full mb-[-1rem]"> {/* Slight scaling to fit better */}
-                      <LotCard lot={lot} showActions={false} />
+                  <div
+                    key={lot._id}
+                    onClick={() => setSelectedLot(lot)}
+                    className="transform scale-95 origin-top-left w-full mb-[-1rem] cursor-pointer transition-transform hover:scale-[0.98]"
+                  >
+                    <LotCard lot={lot} showActions={false} />
                   </div>
                 ))}
               </div>
@@ -158,7 +207,10 @@ export default function MarketplaceOverview({ organizationType }: MarketplaceOve
           <section>
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-semibold text-slate-900">Recent Deals</h2>
-              <button className="text-sm font-medium text-blue-600 hover:text-blue-700 flex items-center gap-1">
+              <button
+                onClick={() => router.push('/dashboard?tab=contracts')}
+                className="text-sm font-medium text-blue-600 hover:text-blue-700 flex items-center gap-1"
+              >
                 View All <ArrowRight className="h-4 w-4" />
               </button>
             </div>
@@ -169,7 +221,7 @@ export default function MarketplaceOverview({ organizationType }: MarketplaceOve
             ) : (
               <div className="space-y-4">
                 {contracts.slice(0, 3).map(contract => (
-                  <ContractCard key={contract._id} contract={contract} />
+                  <ContractCard key={contract._id} contract={contract} showActions={false} />
                 ))}
               </div>
             )}
@@ -181,7 +233,10 @@ export default function MarketplaceOverview({ organizationType }: MarketplaceOve
           <section>
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-semibold text-slate-900">Active Negotiations</h2>
-              <button className="text-sm font-medium text-blue-600 hover:text-blue-700 flex items-center gap-1">
+              <button
+                onClick={() => router.push('/dashboard?tab=bids')}
+                className="text-sm font-medium text-blue-600 hover:text-blue-700 flex items-center gap-1"
+              >
                 View All <ArrowRight className="h-4 w-4" />
               </button>
             </div>
@@ -192,11 +247,12 @@ export default function MarketplaceOverview({ organizationType }: MarketplaceOve
             ) : (
               <div className="space-y-4">
                 {bids.slice(0, 5).map(bid => (
-                  <BidCard 
-                    key={bid._id} 
-                    bid={bid} 
+                  <BidCard
+                    key={bid._id}
+                    bid={bid}
                     viewMode={isBuyer ? 'buyer' : 'seller'}
-                    onStatusUpdate={() => {}} // Read-only summary in dashboard
+                    onStatusUpdate={() => {}}
+                    summary
                   />
                 ))}
               </div>
@@ -205,9 +261,27 @@ export default function MarketplaceOverview({ organizationType }: MarketplaceOve
         </div>
       </div>
 
+      {selectedLot && (
+        <LotDetail
+          lot={selectedLot}
+          onClose={() => setSelectedLot(null)}
+          onEdit={(lot) => {
+            setEditingLot(lot)
+            setSelectedLot(null)
+            setShowLotForm(true)
+          }}
+          onDelete={handleLotDelete}
+          showActions={true}
+        />
+      )}
+
       {showLotForm && (
         <LotForm
-          onClose={() => setShowLotForm(false)}
+          lot={editingLot ?? undefined}
+          onClose={() => {
+            setShowLotForm(false)
+            setEditingLot(null)
+          }}
           onSuccess={handleLotCreateSuccess}
         />
       )}

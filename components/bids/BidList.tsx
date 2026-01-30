@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { DollarSign, Package, Calendar, MapPin, User, CheckCircle2, XCircle, Clock } from 'lucide-react'
-import BidCard from './BidCard'
+import BidCard, { CounterOfferForm } from './BidCard'
 
 export interface Bid {
   _id: string
@@ -32,6 +32,11 @@ export interface Bid {
   deliveryLocation?: string
   createdAt: string
   respondedAt?: string
+  counterOffer?: {
+    price: number
+    volume: { amount: number; unit: string }
+    message?: string
+  }
 }
 
 interface BidListProps {
@@ -107,6 +112,35 @@ export default function BidList({ lotId }: BidListProps) {
     }
   }
 
+  const handleCounterOffer = async (bidId: string, data: CounterOfferForm) => {
+    try {
+      const response = await fetch(`/api/bids/${bidId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          counterOffer: {
+            price: data.price,
+            volume: { amount: data.volumeAmount, unit: data.volumeUnit },
+            message: data.message || undefined,
+          },
+        }),
+      })
+
+      if (response.ok) {
+        fetchBids()
+      } else {
+        const error = await response.json()
+        alert(error.error || 'Failed to send counter-offer')
+        throw new Error(error.error)
+      }
+    } catch (error) {
+      console.error('Error sending counter-offer:', error)
+      throw error
+    }
+  }
+
   const getStatusCounts = () => {
     const counts = {
       all: bids.length,
@@ -163,6 +197,7 @@ export default function BidList({ lotId }: BidListProps) {
               key={bid._id}
               bid={bid}
               onStatusUpdate={handleStatusUpdate}
+              onCounterOffer={handleCounterOffer}
             />
           ))}
         </div>

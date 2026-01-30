@@ -1,15 +1,26 @@
 'use client'
 
-import { DollarSign, Package, Calendar, MapPin, User, Mail, MessageSquare, CheckCircle2, XCircle, Clock } from 'lucide-react'
+import { useState } from 'react'
+import { DollarSign, Package, Calendar, MapPin, User, Mail, MessageSquare, CheckCircle2, XCircle, Clock, Send } from 'lucide-react'
 import { Bid } from './BidList'
+
+export interface CounterOfferForm {
+  price: number
+  volumeAmount: number
+  volumeUnit: string
+  message?: string
+}
 
 interface BidCardProps {
   bid: Bid
   onStatusUpdate: (bidId: string, status: 'accepted' | 'rejected') => void
+  onCounterOffer?: (bidId: string, data: CounterOfferForm) => void | Promise<void>
   viewMode?: 'seller' | 'buyer'
+  /** When true, hide Accept/Reject/Counter actions (e.g. marketplace overview summary) */
+  summary?: boolean
 }
 
-export default function BidCard({ bid, onStatusUpdate, viewMode = 'seller' }: BidCardProps) {
+export default function BidCard({ bid, onStatusUpdate, onCounterOffer, viewMode = 'seller', summary = false }: BidCardProps) {
   const formatCurrency = (amount: number, currency: string) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -78,6 +89,32 @@ export default function BidCard({ bid, onStatusUpdate, viewMode = 'seller' }: Bi
   }
 
   const isPending = bid.status === 'pending'
+  const [showCounterForm, setShowCounterForm] = useState(false)
+  const [counterPrice, setCounterPrice] = useState('')
+  const [counterVolume, setCounterVolume] = useState('')
+  const [counterUnit, setCounterUnit] = useState(bid.volume?.unit || 'gallons')
+  const [counterMessage, setCounterMessage] = useState('')
+  const [counterSubmitting, setCounterSubmitting] = useState(false)
+
+  const hasCounterOffer = !!bid.counterOffer
+
+  const handleCounterSubmit = () => {
+    const price = parseFloat(counterPrice)
+    const vol = parseFloat(counterVolume)
+    if (isNaN(price) || price < 0 || isNaN(vol) || vol <= 0 || !onCounterOffer) return
+    setCounterSubmitting(true)
+    onCounterOffer(bid._id, {
+      price,
+      volumeAmount: vol,
+      volumeUnit: counterUnit,
+      message: counterMessage || undefined,
+    })
+    setShowCounterForm(false)
+    setCounterPrice('')
+    setCounterVolume('')
+    setCounterMessage('')
+    setCounterSubmitting(false)
+  }
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:shadow-md">
@@ -88,7 +125,7 @@ export default function BidCard({ bid, onStatusUpdate, viewMode = 'seller' }: Bi
             <div className="flex-1">
               <div className="mb-2 flex items-center gap-2">
                 <h3 className="text-lg font-semibold text-slate-900">
-                  {bid.lotId.title}
+                  {bid.lotId?.title ?? 'Unknown lot'}
                 </h3>
                 <span className={`flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusColor(bid.status)}`}>
                   {getStatusIcon(bid.status)}
@@ -106,7 +143,7 @@ export default function BidCard({ bid, onStatusUpdate, viewMode = 'seller' }: Bi
             <div className="flex items-center gap-2">
               <User className="h-4 w-4 text-slate-400" />
               <span className="font-medium text-slate-900">
-                {bid.bidderName || `Bidder ${bid.bidderId.slice(0, 8)}`}
+                {bid.bidderName || (typeof bid.bidderId === 'string' ? `Bidder ${bid.bidderId.slice(0, 8)}` : 'Bidder')}
               </span>
             </div>
             {bid.bidderEmail && (
@@ -194,9 +231,20 @@ export default function BidCard({ bid, onStatusUpdate, viewMode = 'seller' }: Bi
             </div>
           )}
 
+          {/* Counter-offer sent */}
+          {!summary && hasCounterOffer && viewMode === 'seller' && (
+            <div className="mb-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">
+              <p className="font-medium">Counter-offer sent</p>
+              <p className="mt-1">
+                {formatCurrency(bid.counterOffer!.price, bid.pricing.currency)} · {bid.counterOffer!.volume.amount.toLocaleString()} {bid.counterOffer!.volume.unit}
+                {bid.counterOffer!.message && ` · ${bid.counterOffer!.message}`}
+              </p>
+            </div>
+          )}
+
           {/* Actions */}
-          {isPending && viewMode === 'seller' && (
-            <div className="flex gap-2 pt-4 border-t border-slate-200">
+          {!summary && isPending && viewMode === 'seller' && (
+            <div className="flex flex-wrap gap-2 pt-4 border-t border-slate-200">
               <button
                 onClick={() => {
                   if (confirm('Are you sure you want to accept this bid?')) {
@@ -219,16 +267,94 @@ export default function BidCard({ bid, onStatusUpdate, viewMode = 'seller' }: Bi
                 <XCircle className="h-4 w-4" />
                 Reject Bid
               </button>
+              {!hasCounterOffer && onCounterOffer && (
+                <button
+                  onClick={() => setShowCounterForm(!showCounterForm)}
+                  className="flex items-center gap-2 rounded-lg bg-amber-100 px-4 py-2 text-sm font-medium text-amber-800 hover:bg-amber-200"
+                >
+                  <Send className="h-4 w-4" />
+                  Counter offer
+                </button>
+              )}
             </div>
           )}
 
-          {isPending && viewMode === 'buyer' && (
+          {!summary && showCounterForm && onCounterOffer && (
+            <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50/50 p-4 space-y-3">
+              <p className="text-sm font-medium text-amber-900">Send counter-offer</p>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-1">Total price</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={counterPrice}
+                    onChange={(e) => setCounterPrice(e.target.value)}
+                    className="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm"
+                    placeholder="e.g. 240000"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-1">Volume</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={counterVolume}
+                    onChange={(e) => setCounterVolume(e.target.value)}
+                    className="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm"
+                    placeholder="e.g. 50000"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-1">Unit</label>
+                  <select
+                    value={counterUnit}
+                    onChange={(e) => setCounterUnit(e.target.value)}
+                    className="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm"
+                  >
+                    <option value="gallons">Gallons</option>
+                    <option value="liters">Liters</option>
+                    <option value="metric-tons">Metric tons</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1">Message (optional)</label>
+                <input
+                  type="text"
+                  value={counterMessage}
+                  onChange={(e) => setCounterMessage(e.target.value)}
+                  className="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm"
+                  placeholder="e.g. Can deliver by March 2026"
+                />
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleCounterSubmit}
+                  disabled={counterSubmitting || !counterPrice || !counterVolume || parseFloat(counterPrice) < 0 || parseFloat(counterVolume) <= 0}
+                  className="rounded-lg bg-amber-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-amber-700 disabled:opacity-50"
+                >
+                  Send counter-offer
+                </button>
+                <button
+                  onClick={() => { setShowCounterForm(false); setCounterPrice(''); setCounterVolume(''); setCounterMessage(''); }}
+                  className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+
+          {!summary && isPending && viewMode === 'buyer' && (
              <div className="pt-4 border-t border-slate-200 text-sm text-slate-500 italic">
                 Waiting for seller response...
              </div>
           )}
 
-          {!isPending && bid.respondedAt && (
+          {!summary && !isPending && bid.respondedAt && (
             <div className="pt-4 border-t border-slate-200 text-xs text-slate-500">
               Responded on {formatDateTime(bid.respondedAt)}
             </div>

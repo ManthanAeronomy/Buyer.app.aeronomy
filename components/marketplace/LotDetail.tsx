@@ -8,10 +8,11 @@ interface LotDetailProps {
   onClose: () => void
   onEdit?: (lot: Lot) => void
   onDelete?: (lotId: string) => void
+  onPlaceBid?: (lot: Lot) => void
   showActions?: boolean
 }
 
-export default function LotDetail({ lot, onClose, onEdit, onDelete, showActions = false }: LotDetailProps) {
+export default function LotDetail({ lot, onClose, onEdit, onDelete, onPlaceBid, showActions = false }: LotDetailProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'published': return 'bg-green-100 text-green-700'
@@ -275,8 +276,11 @@ export default function LotDetail({ lot, onClose, onEdit, onDelete, showActions 
           >
             Close
           </button>
-          {!showActions && lot.status === 'published' && (
-            <button className="px-4 py-2 bg-blue-600 rounded-lg text-sm font-medium text-white hover:bg-blue-700 shadow-sm transition-colors flex items-center gap-2">
+          {!showActions && lot.status === 'published' && onPlaceBid && (
+            <button
+              onClick={() => onPlaceBid(lot)}
+              className="px-4 py-2 bg-blue-600 rounded-lg text-sm font-medium text-white hover:bg-blue-700 shadow-sm transition-colors flex items-center gap-2"
+            >
               <DollarSign className="h-4 w-4" />
               Place Bid
             </button>

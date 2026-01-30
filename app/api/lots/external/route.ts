@@ -57,15 +57,21 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ lots, count: lots.length })
     }
 
-    // Otherwise, fetch lots by organization ID
+    // Otherwise, fetch lots (optionally filtered by organization ID)
     const orgId = searchParams.get('orgId')
-    if (!orgId) {
-      return NextResponse.json({ error: 'orgId parameter is required' }, { status: 400 })
+    const status = searchParams.get('status') as LotStatus | undefined
+
+    // Allow fetching all published lots without orgId (for SAF Marketplace/Producer Dashboard)
+    // Only require orgId if status is not 'published'
+    if (!orgId && status !== 'published') {
+      return NextResponse.json({
+        error: 'orgId parameter is required (or use status=published to fetch all published lots)'
+      }, { status: 400 })
     }
 
     const filters = {
-      orgId,
-      status: searchParams.get('status') as LotStatus | undefined,
+      orgId: orgId || undefined,
+      status,
       type: searchParams.get('type') as LotType | undefined,
       minPrice: searchParams.get('minPrice') ? parseFloat(searchParams.get('minPrice')!) : undefined,
       maxPrice: searchParams.get('maxPrice') ? parseFloat(searchParams.get('maxPrice')!) : undefined,

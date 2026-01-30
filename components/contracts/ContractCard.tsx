@@ -6,9 +6,11 @@ import { Contract } from './ContractList'
 interface ContractCardProps {
   contract: Contract
   onStatusUpdate?: (contractId: string, status: string) => void
+  /** When false, hide Mark as Signed etc. (e.g. marketplace overview summary) */
+  showActions?: boolean
 }
 
-export default function ContractCard({ contract, onStatusUpdate }: ContractCardProps) {
+export default function ContractCard({ contract, onStatusUpdate, showActions = true }: ContractCardProps) {
   const formatCurrency = (amount: number, currency: string) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -91,7 +93,7 @@ export default function ContractCard({ contract, onStatusUpdate }: ContractCardP
           <div className="mb-2 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <FileText className="h-5 w-5 text-primary-600" />
-              <h3 className="text-lg font-semibold text-slate-900">{contract.title}</h3>
+              <h3 className="text-lg font-semibold text-slate-900">{contract?.title ?? 'Untitled contract'}</h3>
             </div>
             <span className={`flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusColor(contract.status)}`}>
               {getStatusIcon(contract.status)}
@@ -115,7 +117,7 @@ export default function ContractCard({ contract, onStatusUpdate }: ContractCardP
             <div className="min-w-0 flex-1">
               <p className="text-xs text-slate-500 mb-1">Buyer</p>
               <p className="font-semibold text-slate-900 break-words">{buyerName}</p>
-              <p className="text-xs text-slate-500 mt-1">From Lot: {contract.lotId.title}</p>
+              <p className="text-xs text-slate-500 mt-1">From Lot: {contract.lotId?.title ?? 'Unknown lot'}</p>
             </div>
           </div>
 
@@ -188,7 +190,7 @@ export default function ContractCard({ contract, onStatusUpdate }: ContractCardP
         </div>
 
         {/* Actions */}
-        {canSign && (
+        {showActions && canSign && (
           <div className="flex gap-2 pt-4 border-t border-slate-200">
             <button
               onClick={() => {

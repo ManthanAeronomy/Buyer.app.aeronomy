@@ -8,6 +8,18 @@ import { resolveMongoUserId } from '@/lib/user-resolver'
 
 export const dynamic = 'force-dynamic'
 
+// CORS headers for cross-origin requests from Producer Dashboard
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*', // In production, set to specific origin like 'http://localhost:3000'
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-API-Key',
+}
+
+// Handle CORS preflight requests
+export async function OPTIONS(request: NextRequest) {
+  return NextResponse.json({}, { headers: corsHeaders })
+}
+
 // GET /api/bids - Get bids for user's lots
 export async function GET(request: NextRequest) {
   try {
@@ -63,18 +75,23 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST /api/bids - Create a new bid (from Buyer Dashboard on port 3000)
+// POST /api/bids - Create a new bid (from Producer Dashboard or internal)
 export async function POST(request: NextRequest) {
   try {
     await connectDB()
 
-    console.log('📥 Receiving bid from Buyer Dashboard (port 3000)...')
+    // Check if this is an external bid (from Producer Dashboard)
+    const apiKey = request.headers.get('X-API-Key')
+    const isExternalBid = !!apiKey // If API key is present, it's from Producer Dashboard
+
+    console.log(`📥 Receiving bid${isExternalBid ? ' from Producer Dashboard (external)' : ' (internal)'}...`)
     const body = await request.json()
     console.log('📦 Bid data received:', {
       lotId: body.lotId,
       bidderId: body.bidderId,
       bidderName: body.bidderName,
       price: body.pricing?.price,
+      isExternal: isExternalBid,
     })
     const {
       lotId,
@@ -91,28 +108,53 @@ export async function POST(request: NextRequest) {
     } = body
 
     // Validate required fields
-    if (!lotId || !bidderId || !volume || !pricing) {
+    if (!lotId || !volume || !pricing) {
       return NextResponse.json(
-        { error: 'Missing required fields: lotId, bidderId, volume, pricing' },
-        { status: 400 }
+        { error: 'Missing required fields: lotId, volume, pricing' },
+        { status: 400, headers: corsHeaders }
       )
     }
 
-    // Resolve bidderId (Clerk userId) to MongoDB User ObjectId
-    const mongoBidderId = await resolveMongoUserId(bidderId)
+    // For external bids, require bidderName and bidderEmail instead of bidderId resolution
+    if (isExternalBid && (!bidderName || !bidderEmail)) {
+      return NextResponse.json(
+        { error: 'External bids require bidderName and bidderEmail' },
+        { status: 400, headers: corsHeaders }
+      )
+    }
+
+    // For internal bids, require bidderId
+    if (!isExternalBid && !bidderId) {
+      return NextResponse.json(
+        { error: 'Missing required field: bidderId' },
+        { status: 400, headers: corsHeaders }
+      )
+    }
+
+    // Only resolve bidderId for internal bids (same Clerk instance)
+    // For external bids, we'll store null and rely on bidderName/bidderEmail
+    let mongoBidderId = null
+    if (!isExternalBid && bidderId) {
+      try {
+        mongoBidderId = await resolveMongoUserId(bidderId)
+      } catch (userError: any) {
+        console.error('Error resolving user:', userError.message)
+        // For internal bids, this is an error. For external, we proceed without user.
+      }
+    }
 
     // Verify lot exists and is published
     const lot = await Lot.findById(lotId)
     if (!lot) {
       console.error(`❌ Lot not found: ${lotId}`)
-      return NextResponse.json({ error: 'Lot not found' }, { status: 404 })
+      return NextResponse.json({ error: 'Lot not found' }, { status: 404, headers: corsHeaders })
     }
 
     if (lot.status !== 'published') {
       console.error(`❌ Lot ${lotId} is not published. Status: ${lot.status}`)
-      return NextResponse.json({ 
-        error: `Lot is not available for bidding. Current status: ${lot.status}` 
-      }, { status: 400 })
+      return NextResponse.json({
+        error: `Lot is not available for bidding. Current status: ${lot.status}`
+      }, { status: 400, headers: corsHeaders })
     }
 
     console.log(`✅ Lot found: ${lot.title} (Status: ${lot.status})`)
@@ -123,45 +165,45 @@ export async function POST(request: NextRequest) {
       if (existingBid) {
         return NextResponse.json(
           { error: 'Bid already exists', bid: existingBid },
-          { status: 409 }
+          { status: 409, headers: corsHeaders }
         )
       }
     }
 
-    // Create bid with MongoDB User ObjectId reference
+    // Create bid - for external bids, bidderId may be null but bidderName/Email are stored
     const bid = await Bid.create({
       lotId,
-      bidderId: mongoBidderId, // MongoDB User ObjectId reference
-      bidderName, // Keep for display/backward compatibility
-      bidderEmail, // Keep for display/backward compatibility
+      bidderId: mongoBidderId, // null for external bids
+      bidderName, // Always store for display
+      bidderEmail, // Always store for contact
+      externalBidderId: isExternalBid ? bidderId : undefined, // Store original Clerk ID from producer
       volume,
       pricing,
       status: 'pending',
       message,
       deliveryDate: deliveryDate ? new Date(deliveryDate) : undefined,
       deliveryLocation,
-      source: 'buyer-dashboard-port-3000', // Updated to reflect bids coming from Buyer Dashboard
+      source: isExternalBid ? 'producer-dashboard' : 'internal',
       externalBidId,
       expiresAt: expiresAt ? new Date(expiresAt) : undefined,
     })
 
-    console.log(`✅ Bid received from Buyer Dashboard (port 3000):`, {
+    console.log(`✅ Bid created${isExternalBid ? ' (external)' : ''}:`, {
       bidId: bid._id,
       lotId: lot.title,
-      bidderName: bid.bidderName || bid.bidderId,
+      bidderName: bid.bidderName,
       price: bid.pricing.price,
       currency: bid.pricing.currency,
     })
 
     const populatedBid = await Bid.findById(bid._id)
       .populate('lotId', 'title volume pricing status')
-      .populate('bidderId', 'firstName lastName email username') // Populate MongoDB User reference
+      .populate('bidderId', 'firstName lastName email username') // Will be null for external bids
       .lean()
 
-    return NextResponse.json({ bid: populatedBid }, { status: 201 })
+    return NextResponse.json({ bid: populatedBid }, { status: 201, headers: corsHeaders })
   } catch (error: any) {
     console.error('Error creating bid:', error)
-    return NextResponse.json({ error: error.message || 'Failed to create bid' }, { status: 500 })
+    return NextResponse.json({ error: error.message || 'Failed to create bid' }, { status: 500, headers: corsHeaders })
   }
 }
-
