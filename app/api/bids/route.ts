@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic'
 
 // CORS headers for cross-origin requests from Producer Dashboard
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*', // In production, set to specific origin like 'http://localhost:3000'
+  'Access-Control-Allow-Origin': process.env.PRODUCER_DASHBOARD_URL || 'http://localhost:3000',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-API-Key',
 }
